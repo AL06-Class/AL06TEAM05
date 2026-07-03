@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 type TalentProfile = {
   id: string;
   displayName: string;
@@ -11,6 +13,10 @@ type TalentProfile = {
   verificationStatus: "confirmed" | "pending";
   connectionStatus: "available" | "proposed";
   matchReason: string;
+  mapPosition: {
+    top: string;
+    left: string;
+  };
 };
 
 const talentProfiles: TalentProfile[] = [
@@ -26,7 +32,11 @@ const talentProfiles: TalentProfile[] = [
     distanceText: "가게에서 약 1.2km",
     verificationStatus: "confirmed",
     connectionStatus: "available",
-    matchReason: "오전 근무 가능 시간이 맞고 가까운 지역을 희망합니다."
+    matchReason: "오전 근무 가능 시간이 맞고 가까운 지역을 희망합니다.",
+    mapPosition: {
+      top: "24%",
+      left: "22%"
+    }
   },
   {
     id: "talent-2",
@@ -40,7 +50,11 @@ const talentProfiles: TalentProfile[] = [
     distanceText: "가게에서 약 2.8km",
     verificationStatus: "confirmed",
     connectionStatus: "available",
-    matchReason: "고객 응대 경험이 있고 주 3일 근무 조건에 맞습니다."
+    matchReason: "고객 응대 경험이 있고 주 3일 근무 조건에 맞습니다.",
+    mapPosition: {
+      top: "58%",
+      left: "52%"
+    }
   },
   {
     id: "talent-3",
@@ -54,11 +68,17 @@ const talentProfiles: TalentProfile[] = [
     distanceText: "가게에서 약 3.5km",
     verificationStatus: "pending",
     connectionStatus: "proposed",
-    matchReason: "주말 단기 근무 후보로 확인 중입니다."
+    matchReason: "주말 단기 근무 후보로 확인 중입니다.",
+    mapPosition: {
+      top: "30%",
+      left: "76%"
+    }
   }
 ];
 
 export default function App() {
+  const [isNearbyMapOpen, setIsNearbyMapOpen] = useState(false);
+
   return (
     <main
       style={{
@@ -119,6 +139,8 @@ export default function App() {
             </p>
           </div>
           <button
+            onClick={() => setIsNearbyMapOpen((current) => !current)}
+            aria-expanded={isNearbyMapOpen}
             style={{
               border: 0,
               borderRadius: "8px",
@@ -130,9 +152,119 @@ export default function App() {
               cursor: "pointer"
             }}
           >
-            가까운 구직자 보기
+            {isNearbyMapOpen ? "목록만 보기" : "가까운 구직자 보기"}
           </button>
         </header>
+
+        {isNearbyMapOpen && (
+          <section
+            aria-label="가까운 구직자 지도"
+            style={{
+              position: "relative",
+              minHeight: "260px",
+              border: "1px solid #c9d7e8",
+              borderRadius: "8px",
+              background:
+                "linear-gradient(135deg, #eef6fb 0%, #ffffff 48%, #edf7ef 100%)",
+              overflow: "hidden",
+              marginBottom: "20px",
+              boxShadow: "0 1px 2px rgba(16, 35, 63, 0.08)"
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                inset: "22px",
+                border: "1px dashed #b9c8d8",
+                borderRadius: "8px"
+              }}
+            />
+            <div
+              style={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                width: "18px",
+                height: "18px",
+                borderRadius: "999px",
+                background: "#1266b0",
+                border: "4px solid #d9ecfb",
+                transform: "translate(-50%, -50%)"
+              }}
+              aria-label="내 가게 위치"
+            />
+            <p
+              style={{
+                position: "absolute",
+                top: "calc(50% + 16px)",
+                left: "50%",
+                transform: "translateX(-50%)",
+                margin: 0,
+                color: "#10233f",
+                fontSize: "15px",
+                fontWeight: 700,
+                whiteSpace: "nowrap"
+              }}
+            >
+              내 가게
+            </p>
+            {talentProfiles.map((profile) => (
+              <button
+                key={profile.id}
+                type="button"
+                title={`${profile.displayName} ${profile.distanceText}`}
+                style={{
+                  position: "absolute",
+                  top: profile.mapPosition.top,
+                  left: profile.mapPosition.left,
+                  border: 0,
+                  background: "transparent",
+                  color: "#ffc400",
+                  fontSize: "42px",
+                  lineHeight: 1,
+                  cursor: "pointer",
+                  filter: "drop-shadow(0 2px 3px rgba(16, 35, 63, 0.25))",
+                  transform: "translate(-50%, -50%)"
+                }}
+              >
+                ★
+              </button>
+            ))}
+            <div
+              style={{
+                position: "absolute",
+                right: "20px",
+                bottom: "18px",
+                width: "min(260px, calc(100% - 40px))",
+                border: "1px solid #d7e0ea",
+                borderRadius: "8px",
+                background: "rgba(255, 255, 255, 0.94)",
+                padding: "14px"
+              }}
+            >
+              <p
+                style={{
+                  margin: "0 0 8px",
+                  color: "#10233f",
+                  fontSize: "16px",
+                  fontWeight: 800
+                }}
+              >
+                주변 구직자 {talentProfiles.length}명
+              </p>
+              <p
+                style={{
+                  margin: 0,
+                  color: "#52606d",
+                  fontSize: "14px",
+                  lineHeight: 1.45
+                }}
+              >
+                별표를 눌러 거리와 후보 정보를 확인할 수 있습니다.
+              </p>
+            </div>
+          </section>
+        )}
 
         <section
           style={{
