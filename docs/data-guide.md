@@ -77,6 +77,10 @@
 - `companies`: 기업
 - `jobPostings`: 채용공고
 - `candidateProfiles`: 지원자 프로필
+- `seniorCandidateProfiles`: 시니어 구직자 프로필
+- `voiceCareerNotes`: 음성 또는 구술 기반 경력 기록
+- `localJobs`: 지역 일자리
+- `partnerOrganizations`: 주민센터/복지관 제휴 기관
 - `applications`: 지원서
 - `scheduleConversations`: 일정 조율 챗봇 대화
 - `availabilitySlots`: 면접 가능 시간
@@ -109,6 +113,13 @@
 - `source`: 생성 또는 판단 근거
 - `createdAt`: 생성 시각
 - `updatedAt`: 수정 시각
+- `region`: 거주 또는 희망 근무 지역
+- `preferredRegion`: 희망 근무 지역
+- `workType`: 가능한 업무 유형
+- `careerNote`: 경력 구술 내용
+- `matchingStatus`: 매칭 상태
+- `connectionStatus`: 지원 또는 연결 상태
+- `organizationId`: 제휴 기관 식별자
 
 ### 과업별 공통 필드 이름
 
@@ -162,6 +173,8 @@
 - `selected`: 선택됨
 - `completed`: 완료
 - `cancelled`: 취소됨
+- `matched`: 매칭됨
+- `connected`: 연결됨
 
 ## 데이터 모델 초안
 
@@ -186,6 +199,49 @@
 - `resumeSummary`
 - `portfolioSummary`
 - `availableTimes`
+- `createdAt`
+- `updatedAt`
+
+### seniorCandidateProfiles
+
+- `id`
+- `userId`
+- `region`
+- `preferredRegion`
+- `workType`
+- `careerNote`
+- `matchingStatus`
+- `connectionStatus`
+- `createdAt`
+- `updatedAt`
+
+### voiceCareerNotes
+
+- `id`
+- `candidateId`
+- `careerNote`
+- `source`
+- `createdAt`
+- `updatedAt`
+
+### localJobs
+
+- `id`
+- `organizationId`
+- `title`
+- `description`
+- `region`
+- `workType`
+- `status`
+- `createdAt`
+- `updatedAt`
+
+### partnerOrganizations
+
+- `id`
+- `title`
+- `region`
+- `description`
 - `createdAt`
 - `updatedAt`
 
@@ -302,6 +358,7 @@
 
 ## 변경 이력
 
+- 2026-07-03: PRD 1.0 시니어 지역 일자리 MVP 구현을 위해 시니어 구직자 프로필, 구술 경력, 지역 일자리, 제휴 기관, 매칭/연결 상태 이름 추가
 - 2026-05-29: SPA와 역할 기반 데이터 기준 반영
 - 2026-05-29: 기본 데이터 기준을 최종 결정에 반영
 - 2026-05-29: 공통 이름 사전과 데이터 이름 추가 절차 반영
