@@ -110,6 +110,14 @@
 - `status`: 상태값
 - `title`: 제목
 - `description`: 설명
+- `companyName`: 기업 또는 사업장 이름
+- `representativeName`: 대표자 이름
+- `businessRegistrationNumber`: 사업자등록번호
+- `businessAddress`: 사업장 주소
+- `contactName`: 담당자 이름
+- `contactPhone`: 담당자 연락처
+- `contactEmail`: 담당자 이메일
+- `hiringRegion`: 구인 희망 지역
 - `startedAt`: 시작 시각
 - `endedAt`: 종료 시각
 - `scheduledAt`: 확정 시각
@@ -217,6 +225,21 @@
 - `resumeSummary`
 - `portfolioSummary`
 - `availableTimes`
+- `createdAt`
+- `updatedAt`
+
+### companies
+
+- `id`
+- `companyName`
+- `representativeName`
+- `businessRegistrationNumber`
+- `businessAddress`
+- `region`
+- `contactName`
+- `contactPhone`
+- `contactEmail`
+- `hiringRegion`
 - `createdAt`
 - `updatedAt`
 
@@ -373,9 +396,11 @@
 - 더미 데이터 기준: 기능 검증에 필요한 최소만 작성
 - DB 연결 기준: 화면 컴포넌트와 데이터 접근 코드를 분리하고 Firebase 연결 코드는 한 곳에서 관리
 - 공통 이름 사전 기준: 새 컬렉션, 필드, 상태값, 역할 값은 구현 전에 이 문서에 먼저 추가
+- 구인자 회원가입 데이터 기준: `companies`에 `companyName`, `businessRegistrationNumber`, `businessAddress`, `contactName`, `contactPhone`, `contactEmail`, `hiringRegion`을 초안으로 사용
 
 ## 변경 이력
 
+- 2026-07-06: 구인자 회원가입 화면 병합을 위해 기업/담당자 기본 필드 초안 추가
 - 2026-07-03: PRD 1.0 시니어 지역 일자리 MVP 구현을 위해 시니어 구직자 프로필, 구술 경력, 지역 일자리, 제휴 기관, 매칭/연결 상태 이름 추가
 - 2026-05-29: SPA와 역할 기반 데이터 기준 반영
 - 2026-05-29: 기본 데이터 기준을 최종 결정에 반영
