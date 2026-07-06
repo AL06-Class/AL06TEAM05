@@ -77,7 +77,11 @@
 - `companies`: 기업
 - `jobPostings`: 채용공고
 - `candidateProfiles`: 지원자 프로필
+- `seniorCandidateProfiles`: 시니어 구직자 프로필
+- `localJobPostings`: 지역 일자리
+- `partnerOrganizations`: 주민센터/복지관 제휴 기관
 - `applications`: 지원서
+- `jobMatches`: 일자리 매칭
 - `scheduleConversations`: 일정 조율 챗봇 대화
 - `availabilitySlots`: 면접 가능 시간
 - `scheduleSuggestions`: 추천 면접 시간
@@ -103,6 +107,19 @@
 - `status`: 상태값
 - `title`: 제목
 - `description`: 설명
+- `companyName`: 기업 또는 사업장 이름
+- `representativeName`: 대표자 이름
+- `businessRegistrationNumber`: 사업자등록번호
+- `businessAddress`: 사업장 주소
+- `contactName`: 담당자 이름
+- `contactPhone`: 담당자 연락처
+- `contactEmail`: 담당자 이메일
+- `region`: 지역
+- `hiringRegion`: 구인 희망 지역
+- `preferredRegion`: 희망 근무 지역
+- `residenceRegion`: 거주 지역
+- `voiceCareerText`: 경력 구술 내용
+- `partnerOrganizationId`: 제휴 기관 식별자
 - `startedAt`: 시작 시각
 - `endedAt`: 종료 시각
 - `scheduledAt`: 확정 시각
@@ -143,6 +160,19 @@
 - UX/UI 개선 작업은 기본적으로 새 DB 이름을 만들지 않습니다.
 - 화면 상태 저장이나 사용자 피드백 데이터가 필요할 때만 공통 이름 사전에 추가합니다.
 
+#### 시니어 지역 일자리 MVP
+
+- `seniorCandidateProfileId`: 시니어 구직자 프로필 식별자
+- `localJobPostingId`: 지역 일자리 식별자
+- `organizationName`: 기관명
+- `organizationType`: 기관 유형
+- `workLocation`: 근무 위치
+- `workType`: 업무 유형
+- `preferredWorkType`: 희망 업무 유형
+- `preferredSchedule`: 희망 근무 일정
+- `matchingReason`: 매칭 이유
+- `matchScore`: 매칭 점수
+
 ### 역할 값
 
 - `candidate`: 지원자
@@ -155,6 +185,8 @@
 - `submitted`: 제출됨
 - `pending`: 대기 중
 - `proposed`: 제안됨
+- `matched`: 매칭됨
+- `connected`: 연결됨
 - `confirmed`: 확정됨
 - `declined`: 거절됨
 - `scheduled`: 일정 확정
@@ -186,6 +218,68 @@
 - `resumeSummary`
 - `portfolioSummary`
 - `availableTimes`
+- `createdAt`
+- `updatedAt`
+
+### companies
+
+- `id`
+- `companyName`
+- `representativeName`
+- `businessRegistrationNumber`
+- `businessAddress`
+- `region`
+- `contactName`
+- `contactPhone`
+- `contactEmail`
+- `createdAt`
+- `updatedAt`
+
+### seniorCandidateProfiles
+
+- `id`
+- `userId`
+- `name`
+- `phone`
+- `residenceRegion`
+- `preferredRegion`
+- `voiceCareerText`
+- `preferredWorkType`
+- `preferredSchedule`
+- `createdAt`
+- `updatedAt`
+
+### localJobPostings
+
+- `id`
+- `partnerOrganizationId`
+- `title`
+- `description`
+- `region`
+- `workLocation`
+- `workType`
+- `status`
+- `createdAt`
+- `updatedAt`
+
+### partnerOrganizations
+
+- `id`
+- `organizationName`
+- `organizationType`
+- `region`
+- `phone`
+- `createdAt`
+- `updatedAt`
+
+### jobMatches
+
+- `id`
+- `seniorCandidateProfileId`
+- `localJobPostingId`
+- `status`
+- `matchingReason`
+- `matchScore`
 - `createdAt`
 - `updatedAt`
 
@@ -299,9 +393,13 @@
 - 더미 데이터 기준: 기능 검증에 필요한 최소만 작성
 - DB 연결 기준: 화면 컴포넌트와 데이터 접근 코드를 분리하고 Firebase 연결 코드는 한 곳에서 관리
 - 공통 이름 사전 기준: 새 컬렉션, 필드, 상태값, 역할 값은 구현 전에 이 문서에 먼저 추가
+- 시니어 지역 일자리 MVP 데이터 기준: `seniorCandidateProfiles`, `localJobPostings`, `partnerOrganizations`, `jobMatches`를 초안으로 사용
+- 구인자 회원가입 데이터 기준: `companies`에 `companyName`, `businessRegistrationNumber`, `businessAddress`, `contactName`, `contactPhone`, `contactEmail`, `hiringRegion`을 초안으로 사용
 
 ## 변경 이력
 
+- 2026-07-03: 구인자 회원가입 화면 구현 전 기업/담당자 기본 필드 초안 추가
+- 2026-07-03: PRD 1.0 기준 시니어 지역 일자리 MVP용 컬렉션, 필드, 상태값 초안 추가
 - 2026-05-29: SPA와 역할 기반 데이터 기준 반영
 - 2026-05-29: 기본 데이터 기준을 최종 결정에 반영
 - 2026-05-29: 공통 이름 사전과 데이터 이름 추가 절차 반영
