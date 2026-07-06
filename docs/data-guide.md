@@ -86,6 +86,9 @@
 - `interviewQuestions`: 면접 질문
 - `evaluations`: 면접 평가
 - `evaluationCriteria`: 평가 기준
+- `seniorTalentProfiles`: 시니어 지역 인재 프로필
+- `localJobMatches`: 지역 일자리 매칭
+- `partnerOrganizations`: 주민센터/복지관 제휴 기관
 
 ### 공통 필드 이름
 
@@ -137,6 +140,21 @@
 - `evaluationItem`: 평가 항목
 - `score`: 점수
 - `comment`: 평가 의견
+
+#### 시니어 지역 일자리 매칭
+
+- `displayName`: 화면 표시 이름
+- `ageRange`: 나이대
+- `homeRegion`: 거주 지역
+- `preferredWorkRegions`: 희망 근무 지역
+- `availableWorkTypes`: 가능한 업무
+- `careerSummary`: 경력 요약
+- `availableSchedule`: 근무 가능 시간
+- `distanceText`: 거리 표시
+- `partnerOrganizationId`: 제휴 기관 식별자
+- `verificationStatus`: 확인 상태
+- `connectionStatus`: 연결 상태
+- `matchReason`: 추천 이유
 
 #### UX/UI 개선
 
