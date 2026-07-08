@@ -88,6 +88,38 @@ button {
   font-weight: 700;
 }
 
+.top-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.top-action-button {
+  min-height: 48px;
+  border: 1px solid #0f5f9f;
+  border-radius: 8px;
+  padding: 10px 18px;
+  background: #176eb6;
+  color: #ffffff;
+  font-weight: 800;
+  transition:
+    transform 160ms ease,
+    background-color 160ms ease;
+}
+
+.top-action-button:first-child {
+  border-color: #b98900;
+  background: #f2b705;
+  color: #17202a;
+}
+
+.top-action-button-secondary {
+  border-color: #294f6d;
+  background: #325e7d;
+}
+
 .hero {
   box-sizing: border-box;
   display: grid;
@@ -497,6 +529,7 @@ h2 {
 }
 
 .login-button:hover,
+.top-action-button:hover,
 .action-card:hover,
 .primary-action:hover,
 .job-card:hover,
@@ -506,6 +539,7 @@ h2 {
 }
 
 .login-button:focus-visible,
+.top-action-button:focus-visible,
 .action-card:focus-visible,
 .primary-action:focus-visible,
 .job-card:focus-visible,
@@ -572,6 +606,10 @@ h2 {
     grid-template-columns: 1fr;
   }
 
+  .top-actions {
+    justify-content: stretch;
+  }
+
   h2 {
     font-size: 24px;
   }
@@ -600,6 +638,7 @@ h2 {
   }
 
   .login-button,
+  .top-action-button,
   .action-card {
     width: 100%;
   }

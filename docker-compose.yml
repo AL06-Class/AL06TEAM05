@@ -6,7 +6,7 @@ services:
     stdin_open: true
     ports:
       - "5173:5173"
-      - "9005:9005"
+      - "9000-9010:9000-9010"
     volumes:
       - .:/app
       - node_modules:/app/node_modules
