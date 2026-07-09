@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { loginWithEmail, loginWithProvider, type LoginProvider } from "./lib/auth";
 
 type LoginPageProps = {
   readonly onBack: () => void;
@@ -8,10 +9,25 @@ export function LoginPage({ onBack }: LoginPageProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setMessage("로그인 기능 연결 전 화면 확인용입니다.");
+    setIsSubmitting(true);
+
+    const result = await loginWithEmail(email, password);
+
+    setMessage(result.status === "success" ? "로그인되었습니다." : result.message);
+    setIsSubmitting(false);
+  };
+
+  const handleProviderLogin = async (provider: LoginProvider) => {
+    setIsSubmitting(true);
+
+    const result = await loginWithProvider(provider);
+
+    setMessage(result.status === "success" ? "로그인되었습니다." : result.message);
+    setIsSubmitting(false);
   };
 
   return (
@@ -49,8 +65,8 @@ export function LoginPage({ onBack }: LoginPageProps) {
               />
             </label>
 
-            <button className="login-submit" type="submit">
-              로그인
+            <button className="login-submit" type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "로그인 중" : "로그인"}
             </button>
 
             <div className="social-login-divider" aria-hidden="true">
@@ -58,10 +74,28 @@ export function LoginPage({ onBack }: LoginPageProps) {
             </div>
 
             <div className="social-login-actions" aria-label="소셜 로그인">
-              <button className="social-login-button kakao-login-button" type="button">
+              <button
+                className="social-login-button google-login-button"
+                type="button"
+                disabled={isSubmitting}
+                onClick={() => void handleProviderLogin("google")}
+              >
+                구글로 로그인
+              </button>
+              <button
+                className="social-login-button kakao-login-button"
+                type="button"
+                disabled={isSubmitting}
+                onClick={() => void handleProviderLogin("kakao")}
+              >
                 카카오로 로그인
               </button>
-              <button className="social-login-button naver-login-button" type="button">
+              <button
+                className="social-login-button naver-login-button"
+                type="button"
+                disabled={isSubmitting}
+                onClick={() => void handleProviderLogin("naver")}
+              >
                 네이버로 로그인
               </button>
             </div>
