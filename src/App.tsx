@@ -1,4 +1,5 @@
 import { FormEvent, useMemo, useState, type CSSProperties } from "react";
+import { BusinessOwnerPage } from "./pages/BusinessOwnerPage";
 
 type ActionLink = {
   readonly label: string;
@@ -30,6 +31,9 @@ type TalentProfile = {
   readonly distanceText: string;
   readonly verificationStatus: "confirmed" | "pending";
   readonly connectionStatus: "available" | "proposed";
+  readonly matchingStatus: "matched" | "pending";
+  readonly partnerOrganization: string;
+  readonly source: string;
   readonly matchReason: string;
   readonly mapPosition: {
     readonly top: string;
@@ -37,7 +41,7 @@ type TalentProfile = {
   };
 };
 
-type PageView = "home" | "applicantSignup" | "recruiterSignup" | "talentMatches";
+type PageView = "home" | "applicantSignup" | "recruiterSignup" | "talentMatches" | "businessOwner";
 
 type SignupStep = "business" | "contact" | "hiring";
 
@@ -105,6 +109,9 @@ const talentProfiles = [
     distanceText: "가게에서 약 1.2km",
     verificationStatus: "confirmed",
     connectionStatus: "available",
+    matchingStatus: "matched",
+    partnerOrganization: "남원읍 주민센터",
+    source: "주민센터 방문 등록",
     matchReason: "오전 근무 가능 시간이 맞고 가까운 지역을 희망합니다.",
     mapPosition: {
       top: "24%",
@@ -123,6 +130,9 @@ const talentProfiles = [
     distanceText: "가게에서 약 2.8km",
     verificationStatus: "confirmed",
     connectionStatus: "available",
+    matchingStatus: "matched",
+    partnerOrganization: "대정읍 복지관",
+    source: "복지관 상담 등록",
     matchReason: "고객 응대 경험이 있고 주 3일 근무 조건에 맞습니다.",
     mapPosition: {
       top: "58%",
@@ -141,6 +151,9 @@ const talentProfiles = [
     distanceText: "가게에서 약 3.5km",
     verificationStatus: "pending",
     connectionStatus: "proposed",
+    matchingStatus: "pending",
+    partnerOrganization: "표선면 주민센터",
+    source: "전화 상담 등록",
     matchReason: "주말 단기 근무 후보로 확인 중입니다.",
     mapPosition: {
       top: "30%",
@@ -205,6 +218,39 @@ const processSteps = [
   "가까운 지역 일자리 후보를 바로 확인합니다."
 ] as const;
 
+const talentPageStats = [
+  { label: "기관 확인 인재", value: "2명" },
+  { label: "3km 안 후보", value: "2명" },
+  { label: "바로 연결 가능", value: "2명" }
+] as const;
+
+const talentConnectionNotes = [
+  "주민센터·복지관 등록 이력을 먼저 확인합니다.",
+  "거리, 가능 업무, 근무 시간, 이동 조건을 함께 봅니다.",
+  "연결 요청 후 기관 담당자가 연락 가능 여부를 확인합니다."
+] as const;
+
+const talentDecisionDetails = [
+  {
+    mobilitySupport: "도보·버스 이동 가능",
+    workIntensity: "서서 오래 일하지 않는 보조 업무 선호",
+    contactPreference: "주민센터 담당자 통해 전화 연결",
+    lastUpdated: "2026-07-08 확인"
+  },
+  {
+    mobilitySupport: "자차 이동 가능",
+    workIntensity: "가벼운 진열·계산 업무 가능",
+    contactPreference: "복지관 상담사 동석 연결 선호",
+    lastUpdated: "2026-07-07 확인"
+  },
+  {
+    mobilitySupport: "마을버스 노선 내 이동 가능",
+    workIntensity: "짧은 시간 청소·정리 업무 선호",
+    contactPreference: "가족 연락처 확인 후 연결",
+    lastUpdated: "2026-07-05 확인"
+  }
+] as const;
+
 export default function App() {
   const [pageView, setPageView] = useState<PageView>(
     window.location.hash === "#talent" ? "talentMatches" : "home"
@@ -222,6 +268,10 @@ export default function App() {
 
   if (pageView === "talentMatches") {
     return <TalentMatches onBack={() => setPageView("home")} />;
+  }
+
+  if (pageView === "businessOwner") {
+    return <BusinessOwnerPage onBack={() => setPageView("home")} />;
   }
 
   return (
@@ -362,6 +412,10 @@ export default function App() {
               <span>{action.description}</span>
             </button>
           ))}
+          <button className="action-card" onClick={() => setPageView("businessOwner")} type="button">
+            <strong>사업자 페이지</strong>
+            <span>지역 일자리 정보를 빠르게 올립니다.</span>
+          </button>
         </div>
       </section>
 
@@ -591,7 +645,8 @@ function TalentMatches({ onBack }: { onBack: () => void }) {
               연결 가능한 지역 인재
             </h1>
             <p style={talentStyles.description}>
-              가까운 지역에서 바로 일할 수 있는 시니어 구직자를 조건에 맞춰 추천합니다.
+              주민센터·복지관 등록 정보를 바탕으로 가까운 지역에서 연결 가능한 시니어
+              구직자를 추천합니다.
             </p>
           </div>
           <button
@@ -630,8 +685,38 @@ function TalentMatches({ onBack }: { onBack: () => void }) {
           </section>
         )}
 
+        <section style={talentStyles.summaryGrid} aria-label="지역 인재 요약">
+          {talentPageStats.map((stat) => (
+            <div key={stat.label} style={talentStyles.summaryItem}>
+              <span>{stat.label}</span>
+              <strong>{stat.value}</strong>
+            </div>
+          ))}
+        </section>
+
+        <section style={talentStyles.guidePanel} aria-label="연결 전 확인 안내">
+          <div>
+            <p style={talentStyles.guideLabel}>연결 전 확인</p>
+            <h2 style={talentStyles.guideTitle}>가까운 사람보다 조건이 맞는 사람을 먼저 추천합니다</h2>
+          </div>
+          <ul style={talentStyles.guideList}>
+            {talentConnectionNotes.map((note) => (
+              <li key={note}>{note}</li>
+            ))}
+          </ul>
+        </section>
+
+        <section style={talentStyles.flowPanel} aria-label="지역 인재 연결 흐름">
+          {["기관 등록 확인", "지역·업무 조건 매칭", "연결 요청 진행"].map((step, index) => (
+            <div key={step} style={talentStyles.flowItem}>
+              <span style={talentStyles.flowNumber}>{index + 1}</span>
+              <strong>{step}</strong>
+            </div>
+          ))}
+        </section>
+
         <div style={talentStyles.filterRow} aria-label="추천 조건">
-          {["남원읍 기준", "오전 근무", "주방/매장 업무", "기관 확인"].map((filter) => (
+          {["남원읍 기준", "오전 근무", "주방/매장 업무", "기관 확인", "연결 가능"].map((filter) => (
             <button key={filter} type="button" style={talentStyles.filterButton}>
               {filter}
             </button>
@@ -639,12 +724,18 @@ function TalentMatches({ onBack }: { onBack: () => void }) {
         </div>
 
         <section style={talentStyles.list} aria-label="추천 구직자 목록">
-          {talentProfiles.map((profile) => (
+          {talentProfiles.map((profile, index) => {
+            const decisionDetail = talentDecisionDetails[index];
+
+            return (
             <article key={profile.id} style={talentStyles.card}>
               <div style={talentStyles.cardHeader}>
                 <div>
                   <div style={talentStyles.badgeRow}>
                     <span style={talentStyles.distanceBadge}>{profile.distanceText}</span>
+                    <span style={talentStyles.matchBadge}>
+                      {profile.matchingStatus === "matched" ? "조건 매칭" : "검토 중"}
+                    </span>
                     <span
                       style={
                         profile.verificationStatus === "confirmed"
@@ -682,13 +773,43 @@ function TalentMatches({ onBack }: { onBack: () => void }) {
                   <dt>희망 지역</dt>
                   <dd>{profile.preferredWorkRegions.join(", ")}</dd>
                 </div>
+                <div>
+                  <dt>등록 경로</dt>
+                  <dd>{profile.source}</dd>
+                </div>
+                <div>
+                  <dt>제휴 기관</dt>
+                  <dd>{profile.partnerOrganization}</dd>
+                </div>
+                <div>
+                  <dt>이동 조건</dt>
+                  <dd>{decisionDetail.mobilitySupport}</dd>
+                </div>
+                <div>
+                  <dt>업무 강도</dt>
+                  <dd>{decisionDetail.workIntensity}</dd>
+                </div>
+                <div>
+                  <dt>연락 방식</dt>
+                  <dd>{decisionDetail.contactPreference}</dd>
+                </div>
+                <div>
+                  <dt>최근 확인</dt>
+                  <dd>{decisionDetail.lastUpdated}</dd>
+                </div>
               </dl>
 
-              <button type="button" style={talentStyles.requestButton}>
-                연결 요청
-              </button>
+              <div style={talentStyles.cardActions}>
+                <button type="button" style={talentStyles.secondaryRequestButton}>
+                  상세 보기
+                </button>
+                <button type="button" style={talentStyles.requestButton}>
+                  {profile.connectionStatus === "available" ? "연결 요청" : "제안 상태 확인"}
+                </button>
+              </div>
             </article>
-          ))}
+            );
+          })}
         </section>
       </section>
     </main>
@@ -1330,9 +1451,86 @@ const talentStyles: Record<string, CSSProperties> = {
     lineHeight: 1.5,
     boxShadow: "0 8px 20px rgba(16, 35, 63, 0.08)"
   },
+  summaryGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+    gap: "10px",
+    marginBottom: "16px"
+  },
+  summaryItem: {
+    display: "grid",
+    gap: "4px",
+    minHeight: "74px",
+    padding: "14px 16px",
+    border: "1px solid #d7e0ea",
+    borderRadius: "8px",
+    background: "#ffffff",
+    color: "#52606d",
+    fontSize: "14px"
+  },
+  guidePanel: {
+    display: "grid",
+    gridTemplateColumns: "minmax(0, 0.9fr) minmax(0, 1.1fr)",
+    gap: "16px",
+    marginBottom: "16px",
+    padding: "18px",
+    border: "1px solid #c9d7e8",
+    borderRadius: "8px",
+    background: "#f8fbff"
+  },
+  guideLabel: {
+    margin: "0 0 6px",
+    color: "#1266b0",
+    fontSize: "14px",
+    fontWeight: 800
+  },
+  guideTitle: {
+    margin: 0,
+    color: "#10233f",
+    fontSize: "22px",
+    lineHeight: 1.35
+  },
+  guideList: {
+    display: "grid",
+    gap: "8px",
+    margin: 0,
+    paddingLeft: "20px",
+    color: "#405261",
+    fontSize: "16px",
+    lineHeight: 1.5
+  },
+  flowPanel: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+    gap: "10px",
+    marginBottom: "16px"
+  },
+  flowItem: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    minHeight: "58px",
+    padding: "12px 14px",
+    border: "1px solid #d7e0ea",
+    borderRadius: "8px",
+    background: "#ffffff",
+    color: "#10233f",
+    fontSize: "16px"
+  },
+  flowNumber: {
+    display: "grid",
+    placeItems: "center",
+    flex: "0 0 auto",
+    width: "30px",
+    height: "30px",
+    borderRadius: "999px",
+    background: "#e8f3ff",
+    color: "#1266b0",
+    fontWeight: 800
+  },
   filterRow: {
     display: "grid",
-    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+    gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
     gap: "10px",
     marginBottom: "16px"
   },
@@ -1378,6 +1576,14 @@ const talentStyles: Record<string, CSSProperties> = {
     fontSize: "13px",
     fontWeight: 800
   },
+  matchBadge: {
+    padding: "2px 8px",
+    borderRadius: "999px",
+    background: "#e8f3ff",
+    color: "#1266b0",
+    fontSize: "13px",
+    fontWeight: 800
+  },
   confirmedBadge: {
     padding: "2px 8px",
     borderRadius: "999px",
@@ -1416,6 +1622,23 @@ const talentStyles: Record<string, CSSProperties> = {
     gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
     gap: "8px 18px",
     margin: 0
+  },
+  cardActions: {
+    display: "grid",
+    gridTemplateColumns: "minmax(0, 0.8fr) minmax(0, 1.2fr)",
+    gap: "10px"
+  },
+  secondaryRequestButton: {
+    justifySelf: "stretch",
+    minHeight: "48px",
+    minWidth: 0,
+    border: "1px solid #b8c7d9",
+    borderRadius: "8px",
+    background: "#ffffff",
+    color: "#10233f",
+    fontSize: "16px",
+    fontWeight: 800,
+    cursor: "pointer"
   },
   requestButton: {
     justifySelf: "stretch",
