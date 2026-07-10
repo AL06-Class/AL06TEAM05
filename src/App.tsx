@@ -1,4 +1,5 @@
 import { FormEvent, useMemo, useState, type CSSProperties } from "react";
+import { LoginPage } from "./LoginPage";
 
 type ActionLink = {
   readonly label: string;
@@ -37,7 +38,7 @@ type TalentProfile = {
   };
 };
 
-type PageView = "home" | "applicantSignup" | "recruiterSignup" | "talentMatches";
+type PageView = "home" | "login" | "applicantSignup" | "recruiterSignup" | "talentMatches";
 
 type SignupStep = "business" | "contact" | "hiring";
 
@@ -216,6 +217,10 @@ export default function App() {
     return <ApplicantSignup onBack={() => setPageView("home")} />;
   }
 
+  if (pageView === "login") {
+    return <LoginPage onBack={() => setPageView("home")} />;
+  }
+
   if (pageView === "recruiterSignup") {
     return <RecruiterSignup onBack={() => setPageView("home")} />;
   }
@@ -252,7 +257,7 @@ export default function App() {
           >
             지역 인재 보기
           </button>
-          <button className="login-button" type="button">
+          <button className="login-button" type="button" onClick={() => setPageView("login")}>
             로그인
           </button>
         </div>
