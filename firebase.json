@@ -1,4 +1,18 @@
 {
+  "functions": {
+    "source": "functions"
+  },
+  "emulators": {
+    "functions": {
+      "host": "0.0.0.0",
+      "port": 5001
+    },
+    "ui": {
+      "enabled": true,
+      "host": "0.0.0.0",
+      "port": 9005
+    }
+  },
   "hosting": {
     "public": "dist",
     "ignore": [
@@ -7,6 +21,10 @@
       "**/node_modules/**"
     ],
     "rewrites": [
+      {
+        "source": "/api/resume-draft",
+        "function": "resumeDraft"
+      },
       {
         "source": "**",
         "destination": "/index.html"

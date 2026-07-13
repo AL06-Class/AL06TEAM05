@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "functions:serve": "node scripts/start-functions-emulator.cjs",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -1,0 +1,11 @@
+{
+  "name": "al06team05-functions",
+  "private": true,
+  "main": "index.js",
+  "engines": {
+    "node": "22"
+  },
+  "dependencies": {
+    "firebase-functions": "^7.2.5"
+  }
+}

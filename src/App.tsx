@@ -1,5 +1,13 @@
-import { FormEvent, useMemo, useState, type CSSProperties } from "react";
+﻿import { FormEvent, useMemo, useRef, useState, type CSSProperties } from "react";
 import { LoginPage } from "./LoginPage";
+import {
+  requestResumeDraft,
+  type ResumeAiResponse
+} from "./services/resumeAiClient";
+import {
+  buildResumeAiRequest,
+  type ResumeAiAnswers
+} from "./services/resumeAiRequest";
 
 type ActionLink = {
   readonly label: string;
@@ -42,7 +50,18 @@ type PageView = "home" | "login" | "applicantSignup" | "recruiterSignup" | "tale
 
 type SignupStep = "business" | "contact" | "hiring";
 
-type ApplicantStepId = "start" | "face" | "idCard" | "story" | "resume";
+type ApplicantStepId =
+  | "start"
+  | "face"
+  | "idCard"
+  | "review"
+  | "resumeForm"
+  | "resumeResult";
+
+type UploadedImage = {
+  fileName: string;
+  previewUrl: string;
+};
 
 type RecruiterSignupForm = {
   companyName: string;
@@ -78,10 +97,11 @@ const signupSteps: Array<{ id: SignupStep; label: string; title: string }> = [
 
 const applicantSteps: Array<{ id: ApplicantStepId; title: string }> = [
   { id: "start", title: "시작" },
-  { id: "face", title: "내 사진" },
-  { id: "idCard", title: "신분증" },
-  { id: "story", title: "말로 이력서" },
-  { id: "resume", title: "확인" }
+  { id: "face", title: "얼굴 사진" },
+  { id: "idCard", title: "본인 확인" },
+  { id: "review", title: "사진 확인" },
+  { id: "resumeForm", title: "이력서 등록" },
+  { id: "resumeResult", title: "이력서 확인" }
 ];
 
 const applicantStoryText =
@@ -390,30 +410,180 @@ export default function App() {
 
 function ApplicantSignup({ onBack }: { onBack: () => void }) {
   const [stepIndex, setStepIndex] = useState(0);
-  const [faceReady, setFaceReady] = useState(false);
-  const [idCardReady, setIdCardReady] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [storyReady, setStoryReady] = useState(false);
+  const [faceImage, setFaceImage] = useState<UploadedImage | null>(null);
+  const [idCardImage, setIdCardImage] = useState<UploadedImage | null>(null);
+  const [answers, setAnswers] = useState<ResumeAiAnswers>({
+    wantedJob: "",
+    experience: "",
+    strength: "",
+    workTime: "",
+    workArea: ""
+  });
+  const [resumeText, setResumeText] =
+    useState<ResumeAiResponse["resumeText"] | null>(null);
+  const [isGeneratingResume, setIsGeneratingResume] = useState(false);
+  const [recordingField, setRecordingField] =
+    useState<keyof ResumeAiAnswers | null>(null);
+  const [message, setMessage] = useState("");
+  const recognitionRef = useRef<any>(null);
   const currentStep = applicantSteps[stepIndex];
+  const isSpeechSupported =
+    typeof window !== "undefined" &&
+    ("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
 
   const canGoNext =
     currentStep.id === "start" ||
-    (currentStep.id === "face" && faceReady) ||
-    (currentStep.id === "idCard" && idCardReady) ||
-    (currentStep.id === "story" && storyReady);
+    (currentStep.id === "face" && Boolean(faceImage)) ||
+    (currentStep.id === "idCard" && Boolean(idCardImage)) ||
+    (currentStep.id === "review" && Boolean(faceImage) && Boolean(idCardImage)) ||
+    (currentStep.id === "resumeForm" && !isGeneratingResume);
+
+  const stopRecording = () => {
+    recognitionRef.current?.stop();
+    recognitionRef.current = null;
+    setRecordingField(null);
+  };
 
   const goNext = () => {
+    stopRecording();
     setStepIndex((current) => Math.min(current + 1, applicantSteps.length - 1));
+    setMessage("");
   };
 
   const goBack = () => {
+    stopRecording();
+
     if (stepIndex === 0) {
       onBack();
       return;
     }
 
     setStepIndex((current) => Math.max(current - 1, 0));
+    setMessage("");
   };
+
+  const readImage = (file: File, onReady: (image: UploadedImage) => void) => {
+    if (!file.type.startsWith("image/")) {
+      setMessage("사진 파일만 올릴 수 있습니다.");
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      onReady({
+        fileName: file.name,
+        previewUrl: String(reader.result)
+      });
+      setMessage("사진을 불러왔습니다. 저장하지 않고 화면에서만 사용합니다.");
+    };
+
+    reader.onerror = () => {
+      setMessage("사진을 불러오지 못했습니다. 다른 사진을 선택해주세요.");
+    };
+
+    reader.readAsDataURL(file);
+  };
+
+  const updateAnswer = (field: keyof ResumeAiAnswers, value: string) => {
+    setAnswers((current) => ({
+      ...current,
+      [field]: value
+    }));
+  };
+
+  const startRecording = (field: keyof ResumeAiAnswers) => {
+    if (!isSpeechSupported) {
+      setMessage("이 브라우저는 녹음 입력을 지원하지 않습니다. 직접 입력해주세요.");
+      return;
+    }
+
+    if (recordingField === field) {
+      stopRecording();
+      setMessage("녹음을 멈췄습니다.");
+      return;
+    }
+
+    stopRecording();
+
+    const BrowserSpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const recognition = new BrowserSpeechRecognition();
+
+    recognition.lang = "ko-KR";
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onresult = (event: any) => {
+      const transcript = Array.from(event.results)
+        .map((result: any) => result[0]?.transcript ?? "")
+        .join(" ")
+        .trim();
+
+      if (transcript) {
+        setAnswers((current) => ({
+          ...current,
+          [field]: [current[field], transcript].filter(Boolean).join(" ")
+        }));
+        setMessage("말씀하신 내용을 적었습니다.");
+      }
+    };
+
+    recognition.onerror = () => {
+      setMessage("녹음 내용을 읽지 못했습니다. 다시 말하거나 직접 입력해주세요.");
+      setRecordingField(null);
+      recognitionRef.current = null;
+    };
+
+    recognition.onend = () => {
+      setRecordingField(null);
+      recognitionRef.current = null;
+    };
+
+    recognitionRef.current = recognition;
+    setRecordingField(field);
+    setMessage("말씀해주세요. 끝나면 자동으로 글자로 적습니다.");
+    recognition.start();
+  };
+
+  const createResumePreview = async () => {
+    stopRecording();
+    setIsGeneratingResume(true);
+    setMessage("이력서를 만들고 있습니다. 잠시만 기다려주세요.");
+
+    try {
+      const resumeAiRequest = buildResumeAiRequest({
+        answers,
+        facePhotoFileName: faceImage?.fileName ?? null,
+        identityPhotoFileName: idCardImage?.fileName ?? null
+      });
+      const response = await requestResumeDraft(resumeAiRequest);
+
+      setResumeText(response.resumeText);
+      setStepIndex((current) => Math.min(current + 1, applicantSteps.length - 1));
+      setMessage("");
+    } catch {
+      setMessage("이력서를 만들지 못했습니다. 다시 눌러주세요.");
+    } finally {
+      setIsGeneratingResume(false);
+    }
+  };
+
+  const handleNext = () => {
+    if (currentStep.id === "resumeForm") {
+      void createResumePreview();
+      return;
+    }
+
+    goNext();
+  };
+
+  const nextButtonText =
+    currentStep.id === "review"
+      ? "이력서 답하기 시작"
+      : currentStep.id === "resumeForm"
+        ? isGeneratingResume ? "만드는 중" : "이력서 만들기"
+        : stepIndex === 0 ? "시작하기" : "다음";
 
   return (
     <main style={applicantStyles.page}>
@@ -422,17 +592,16 @@ function ApplicantSignup({ onBack }: { onBack: () => void }) {
           <button type="button" style={applicantStyles.backLink} onClick={onBack}>
             메인으로 돌아가기
           </button>
-          <p style={applicantStyles.eyebrow}>Blogle2 구직자 등록</p>
+          <p style={applicantStyles.eyebrow}>구직자 간편 등록</p>
           <h1 id="applicant-title" style={applicantStyles.title}>
-            사진을 찍고 말하면 이력서가 만들어져요.
+            사진 확인 후 이력서를 등록합니다.
           </h1>
           <p style={applicantStyles.description}>
-            어려운 글 입력 대신 사진과 음성으로 경력, 희망 조건, 가까운 일자리 연결 정보를
-            남길 수 있습니다.
+            얼굴 사진과 본인 확인 사진을 먼저 올린 뒤, 말로 이력서 내용을 등록합니다.
           </p>
         </header>
 
-        <nav aria-label="구직자 등록 단계" style={applicantStyles.steps}>
+        <nav aria-label="이력서 준비 단계" style={applicantStyles.steps}>
           {applicantSteps.map((step, index) => (
             <div
               key={step.id}
@@ -448,111 +617,159 @@ function ApplicantSignup({ onBack }: { onBack: () => void }) {
           ))}
         </nav>
 
+        {message && <p style={applicantStyles.notice}>{message}</p>}
+
         <section style={applicantStyles.panel}>
           {currentStep.id === "start" && (
             <>
               <p style={applicantStyles.panelLabel}>1단계</p>
-              <h2 style={applicantStyles.panelTitle}>이력서 만들기를 시작합니다</h2>
+              <h2 style={applicantStyles.panelTitle}>천천히 시작하겠습니다</h2>
               <p style={applicantStyles.panelText}>
-                내 사진, 신분증 사진, 말로 남긴 경력을 차례대로 등록합니다.
+                간편 회원가입을 위해 얼굴 사진과 본인 확인 사진을 먼저 올립니다.
               </p>
             </>
           )}
 
           {currentStep.id === "face" && (
-            <>
-              <p style={applicantStyles.panelLabel}>2단계</p>
-              <h2 style={applicantStyles.panelTitle}>내 사진을 올려주세요</h2>
-              <div style={applicantStyles.captureBox}>
-                {faceReady ? "내 사진 올리기 완료" : "내 사진 자리"}
-              </div>
-              <button
-                type="button"
-                style={applicantStyles.secondaryButton}
-                onClick={() => setFaceReady(true)}
-              >
-                사진 올리기
-              </button>
-            </>
+            <PhotoPanel
+              label="2단계"
+              title="얼굴 사진을 올려주세요"
+              guide="정면으로 나온 사진을 선택해주세요."
+              inputId="face-photo"
+              image={faceImage}
+              onChange={(file) => file && readImage(file, setFaceImage)}
+              onDelete={() => {
+                setFaceImage(null);
+                setMessage("얼굴 사진을 삭제했습니다. 다시 올릴 수 있습니다.");
+              }}
+            />
           )}
 
           {currentStep.id === "idCard" && (
-            <>
-              <p style={applicantStyles.panelLabel}>3단계</p>
-              <h2 style={applicantStyles.panelTitle}>신분증 사진을 올려주세요</h2>
-              <div style={applicantStyles.captureBox}>
-                {idCardReady ? "신분증 사진 올리기 완료" : "신분증 사진 자리"}
-              </div>
-              <button
-                type="button"
-                style={applicantStyles.secondaryButton}
-                onClick={() => setIdCardReady(true)}
-              >
-                사진 올리기
-              </button>
-            </>
+            <PhotoPanel
+              label="3단계"
+              title="본인 확인 사진을 올려주세요"
+              guide="신분 확인용 사진을 선택해주세요. 저장하지 않습니다."
+              inputId="id-card-photo"
+              image={idCardImage}
+              onChange={(file) => file && readImage(file, setIdCardImage)}
+              onDelete={() => {
+                setIdCardImage(null);
+                setMessage("본인 확인 사진을 삭제했습니다. 다시 올릴 수 있습니다.");
+              }}
+            />
           )}
 
-          {currentStep.id === "story" && (
+          {currentStep.id === "review" && (
             <>
               <p style={applicantStyles.panelLabel}>4단계</p>
-              <h2 style={applicantStyles.panelTitle}>말로 이력서를 만듭니다</h2>
+              <h2 style={applicantStyles.panelTitle}>올린 사진을 확인해주세요</h2>
+              <div style={applicantStyles.previewGrid}>
+                <PreviewCard
+                  title="얼굴 사진"
+                  image={faceImage}
+                  onDelete={() => {
+                    setFaceImage(null);
+                    setStepIndex(1);
+                    setMessage("얼굴 사진을 삭제했습니다. 다시 올려주세요.");
+                  }}
+                />
+                <PreviewCard
+                  title="본인 확인 사진"
+                  image={idCardImage}
+                  onDelete={() => {
+                    setIdCardImage(null);
+                    setStepIndex(2);
+                    setMessage("본인 확인 사진을 삭제했습니다. 다시 올려주세요.");
+                  }}
+                />
+              </div>
               <p style={applicantStyles.panelText}>
-                해본 일, 일하고 싶은 시간, 원하는 지역을 편하게 말해주세요.
+                사진 2장이 모두 보이면 이력서 등록을 시작할 수 있습니다.
               </p>
-              <p style={isRecording ? applicantStyles.recordingOn : applicantStyles.recordingOff}>
-                {isRecording
-                  ? "녹음 중입니다. 다 말했으면 완료를 눌러주세요."
-                  : storyReady
-                    ? "녹음이 완료됐습니다."
-                    : "녹음 시작 버튼을 눌러주세요."}
-              </p>
-              <button
-                type="button"
-                style={applicantStyles.secondaryButton}
-                onClick={() => {
-                  if (isRecording) {
-                    setIsRecording(false);
-                    setStoryReady(true);
-                    return;
-                  }
-
-                  setStoryReady(false);
-                  setIsRecording(true);
-                }}
-              >
-                {isRecording ? "녹음 완료" : storyReady ? "다시 녹음" : "녹음 시작"}
-              </button>
-              {storyReady && <p style={applicantStyles.transcript}>{applicantStoryText}</p>}
             </>
           )}
 
-          {currentStep.id === "resume" && (
+          {currentStep.id === "resumeForm" && (
             <>
-              <p style={applicantStyles.panelLabel}>완료</p>
-              <h2 style={applicantStyles.panelTitle}>이력서 초안</h2>
+              <p style={applicantStyles.panelLabel}>이력서 등록</p>
+              <h2 style={applicantStyles.panelTitle}>버튼을 누르고 말씀해주세요</h2>
+              <p style={applicantStyles.panelText}>
+                각 질문마다 녹음 버튼을 누르고 편하게 말씀해주세요. 잘못 적히면 직접 고칠 수 있습니다.
+              </p>
+              {!isSpeechSupported && (
+                <p style={applicantStyles.recordingOff}>
+                  현재 브라우저에서는 녹음 입력이 어렵습니다. 아래 칸에 직접 적어주세요.
+                </p>
+              )}
+              <div style={applicantStyles.formGrid}>
+                <QuestionField
+                  field="wantedJob"
+                  label="어떤 일을 하고 싶으세요?"
+                  placeholder="예: 청소, 주방 보조, 안내"
+                  value={answers.wantedJob}
+                  isRecording={recordingField === "wantedJob"}
+                  onRecord={startRecording}
+                  onChange={(value) => updateAnswer("wantedJob", value)}
+                />
+                <QuestionField
+                  field="experience"
+                  label="전에 해본 일을 말씀해주세요"
+                  placeholder="예: 식당에서 5년 일했습니다"
+                  value={answers.experience}
+                  isRecording={recordingField === "experience"}
+                  onRecord={startRecording}
+                  onChange={(value) => updateAnswer("experience", value)}
+                />
+                <QuestionField
+                  field="strength"
+                  label="잘하는 점은 무엇인가요?"
+                  placeholder="예: 성실합니다, 시간이 정확합니다"
+                  value={answers.strength}
+                  isRecording={recordingField === "strength"}
+                  onRecord={startRecording}
+                  onChange={(value) => updateAnswer("strength", value)}
+                />
+                <QuestionField
+                  field="workTime"
+                  label="언제 일할 수 있으세요?"
+                  placeholder="예: 오전, 오후, 주 3일"
+                  value={answers.workTime}
+                  isRecording={recordingField === "workTime"}
+                  onRecord={startRecording}
+                  onChange={(value) => updateAnswer("workTime", value)}
+                />
+                <QuestionField
+                  field="workArea"
+                  label="어느 지역에서 일하고 싶으세요?"
+                  placeholder="예: 집 근처, 강서구, 버스로 갈 수 있는 곳"
+                  value={answers.workArea}
+                  isRecording={recordingField === "workArea"}
+                  onRecord={startRecording}
+                  onChange={(value) => updateAnswer("workArea", value)}
+                />
+              </div>
+            </>
+          )}
+
+          {currentStep.id === "resumeResult" && (
+            <>
+              <p style={applicantStyles.panelLabel}>이력서 확인</p>
+              <h2 style={applicantStyles.panelTitle}>이력서 미리보기</h2>
+              <p style={applicantStyles.panelText}>
+                말씀하신 내용을 바탕으로 만든 이력서입니다. 아직 저장하지 않았습니다.
+              </p>
               <dl style={applicantStyles.resumeList}>
-                <div style={applicantStyles.resumeRow}>
-                  <dt>이름</dt>
-                  <dd>김도란</dd>
-                </div>
-                <div style={applicantStyles.resumeRow}>
-                  <dt>주요 경력</dt>
-                  <dd>마을 식당 주방 보조 8년</dd>
-                </div>
-                <div style={applicantStyles.resumeRow}>
-                  <dt>희망 조건</dt>
-                  <dd>집 근처 오전 근무</dd>
-                </div>
+                <ResumeRow label="희망하는 일" value={resumeText?.wantedJob ?? ""} />
+                <ResumeRow label="해본 일" value={resumeText?.experience ?? ""} />
+                <ResumeRow label="잘하는 점" value={resumeText?.strength ?? ""} />
+                <ResumeRow label="일할 수 있는 시간" value={resumeText?.workTime ?? ""} />
+                <ResumeRow label="희망 지역" value={resumeText?.workArea ?? ""} />
               </dl>
-              <h3 style={applicantStyles.jobTitle}>연결 가능한 지역 일자리</h3>
-              <ul style={applicantStyles.jobList}>
-                {applicantJobs.map((job) => (
-                  <li key={job} style={applicantStyles.jobItem}>
-                    {job}
-                  </li>
-                ))}
-              </ul>
+              <p style={applicantStyles.panelText}>버튼을 누른 뒤 PDF 저장을 선택해주세요.</p>
+              <button type="button" style={applicantStyles.primaryButton} onClick={() => window.print()}>
+                이력서 다운로드
+              </button>
             </>
           )}
         </section>
@@ -561,7 +778,7 @@ function ApplicantSignup({ onBack }: { onBack: () => void }) {
           <button type="button" style={applicantStyles.secondaryButton} onClick={goBack}>
             {stepIndex === 0 ? "메인으로" : "이전"}
           </button>
-          {currentStep.id !== "resume" && (
+          {currentStep.id !== "resumeResult" && (
             <button
               type="button"
               style={{
@@ -569,9 +786,9 @@ function ApplicantSignup({ onBack }: { onBack: () => void }) {
                 ...(!canGoNext ? applicantStyles.disabledButton : {})
               }}
               disabled={!canGoNext}
-              onClick={goNext}
+              onClick={handleNext}
             >
-              {stepIndex === 0 ? "시작하기" : "다음"}
+              {nextButtonText}
             </button>
           )}
         </footer>
@@ -580,6 +797,151 @@ function ApplicantSignup({ onBack }: { onBack: () => void }) {
   );
 }
 
+function PhotoPanel({
+  label,
+  title,
+  guide,
+  inputId,
+  image,
+  onChange,
+  onDelete
+}: {
+  label: string;
+  title: string;
+  guide: string;
+  inputId: string;
+  image: UploadedImage | null;
+  onChange: (file: File | undefined) => void;
+  onDelete: () => void;
+}) {
+  return (
+    <>
+      <p style={applicantStyles.panelLabel}>{label}</p>
+      <h2 style={applicantStyles.panelTitle}>{title}</h2>
+      <p style={applicantStyles.panelText}>{guide}</p>
+      <label htmlFor={inputId} style={applicantStyles.captureBox}>
+        {image ? (
+          <span style={applicantStyles.uploadDone}>사진이 올라갔습니다</span>
+        ) : (
+          "사진을 선택해주세요"
+        )}
+      </label>
+      {image && <p style={applicantStyles.fileName}>{image.fileName}</p>}
+      <input
+        id={inputId}
+        type="file"
+        accept="image/*"
+        onChange={(event) => {
+          onChange(event.target.files?.[0]);
+          event.currentTarget.value = "";
+        }}
+        style={applicantStyles.fileInput}
+      />
+      <label htmlFor={inputId} style={applicantStyles.secondaryButton}>
+        {image ? "다시 선택" : "사진 선택"}
+      </label>
+      <PhotoList image={image} onDelete={onDelete} />
+    </>
+  );
+}
+
+function PreviewCard({
+  title,
+  image,
+  onDelete
+}: {
+  title: string;
+  image: UploadedImage | null;
+  onDelete: () => void;
+}) {
+  return (
+    <section style={applicantStyles.previewCard}>
+      <h3 style={applicantStyles.jobTitle}>{title}</h3>
+      {image ? (
+        <>
+          <div style={applicantStyles.smallPhotoSummary}>업로드 완료</div>
+          <PhotoList image={image} onDelete={onDelete} />
+        </>
+      ) : (
+        <p style={applicantStyles.panelText}>아직 선택하지 않았습니다.</p>
+      )}
+    </section>
+  );
+}
+
+function PhotoList({
+  image,
+  onDelete
+}: {
+  image: UploadedImage | null;
+  onDelete: () => void;
+}) {
+  if (!image) {
+    return <p style={applicantStyles.emptyPhotoList}>올린 사진이 없습니다.</p>;
+  }
+
+  return (
+    <div style={applicantStyles.photoList} aria-label="올린 사진 목록">
+      <p style={applicantStyles.photoListTitle}>올린 사진 목록</p>
+      <div style={applicantStyles.photoItem}>
+        <span style={applicantStyles.fileName}>{image.fileName}</span>
+        <button type="button" style={applicantStyles.deleteButton} onClick={onDelete}>
+          삭제
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function QuestionField({
+  field,
+  label,
+  placeholder,
+  value,
+  isRecording,
+  onRecord,
+  onChange
+}: {
+  field: keyof ResumeAiAnswers;
+  label: string;
+  placeholder: string;
+  value: string;
+  isRecording: boolean;
+  onRecord: (field: keyof ResumeAiAnswers) => void;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div style={applicantStyles.field}>
+      <span style={applicantStyles.fieldLabel}>{label}</span>
+      <button
+        type="button"
+        style={isRecording ? applicantStyles.recordButtonOn : applicantStyles.recordButton}
+        onClick={() => onRecord(field)}
+      >
+        {isRecording ? "녹음 멈추기" : "말로 답하기"}
+      </button>
+      <textarea
+        value={value}
+        placeholder={placeholder}
+        onChange={(event) => onChange(event.target.value)}
+        rows={3}
+        style={applicantStyles.textarea}
+      />
+      <p style={isRecording ? applicantStyles.recordingOn : applicantStyles.recordingOff}>
+        {isRecording ? "듣고 있습니다. 편하게 말씀해주세요." : "녹음 후 글자가 맞는지 확인해주세요."}
+      </p>
+    </div>
+  );
+}
+
+function ResumeRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={applicantStyles.resumeRow}>
+      <dt>{label}</dt>
+      <dd>{value}</dd>
+    </div>
+  );
+}
 function TalentMatches({ onBack }: { onBack: () => void }) {
   const [isNearbyMapOpen, setIsNearbyMapOpen] = useState(true);
 
@@ -596,7 +958,7 @@ function TalentMatches({ onBack }: { onBack: () => void }) {
               연결 가능한 지역 인재
             </h1>
             <p style={talentStyles.description}>
-              가까운 지역에서 바로 일할 수 있는 시니어 구직자를 조건에 맞춰 추천합니다.
+              가까운 지역에서 바로 일할 수 있는 분을 조건에 맞춰 추천합니다.
             </p>
           </div>
           <button
@@ -605,12 +967,12 @@ function TalentMatches({ onBack }: { onBack: () => void }) {
             aria-expanded={isNearbyMapOpen}
             onClick={() => setIsNearbyMapOpen((current) => !current)}
           >
-            {isNearbyMapOpen ? "목록만 보기" : "가까운 구직자 보기"}
+            {isNearbyMapOpen ? "목록만 보기" : "가까운 분 보기"}
           </button>
         </header>
 
         {isNearbyMapOpen && (
-          <section aria-label="가까운 구직자 지도" style={talentStyles.mapPanel}>
+          <section aria-label="가까운 인재 지도" style={talentStyles.mapPanel}>
             <div style={talentStyles.mapGuide} />
             <div style={talentStyles.storeMarker} aria-label="내 가게 위치" />
             <p style={talentStyles.storeLabel}>내 가게</p>
@@ -629,7 +991,7 @@ function TalentMatches({ onBack }: { onBack: () => void }) {
               </button>
             ))}
             <aside style={talentStyles.mapSummary}>
-              <strong>주변 구직자 3명</strong>
+              <strong>주변 인재 3명</strong>
               <span>필요 업무와 거리에 맞는 후보를 확인할 수 있습니다.</span>
             </aside>
           </section>
@@ -643,7 +1005,7 @@ function TalentMatches({ onBack }: { onBack: () => void }) {
           ))}
         </div>
 
-        <section style={talentStyles.list} aria-label="추천 구직자 목록">
+        <section style={talentStyles.list} aria-label="추천 인재 목록">
           {talentProfiles.map((profile) => (
             <article key={profile.id} style={talentStyles.card}>
               <div style={talentStyles.cardHeader}>
@@ -1096,7 +1458,7 @@ const applicantStyles: Record<string, CSSProperties> = {
   },
   captureBox: {
     display: "grid",
-    minHeight: "160px",
+    minHeight: "112px",
     placeItems: "center",
     border: "2px dashed #b8c7d9",
     borderRadius: "8px",
@@ -1104,6 +1466,69 @@ const applicantStyles: Record<string, CSSProperties> = {
     color: "#52606d",
     fontSize: "18px",
     fontWeight: 800
+  },
+  uploadDone: {
+    display: "grid",
+    width: "100%",
+    minHeight: "84px",
+    placeItems: "center",
+    borderRadius: "8px",
+    background: "#eef6ff",
+    color: "#0f5fa8",
+    fontSize: "20px",
+    fontWeight: 900
+  },
+  smallPhotoSummary: {
+    display: "grid",
+    width: "100%",
+    minHeight: "72px",
+    placeItems: "center",
+    borderRadius: "8px",
+    background: "#eef6ff",
+    color: "#0f5fa8",
+    fontSize: "18px",
+    fontWeight: 900
+  },
+  photoList: {
+    display: "grid",
+    gap: "8px",
+    padding: "12px",
+    border: "1px solid #d8e1ec",
+    borderRadius: "8px",
+    background: "#ffffff"
+  },
+  photoListTitle: {
+    margin: 0,
+    color: "#102a43",
+    fontSize: "17px",
+    fontWeight: 900
+  },
+  photoItem: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "10px",
+    flexWrap: "wrap"
+  },
+  emptyPhotoList: {
+    margin: 0,
+    padding: "12px",
+    borderRadius: "8px",
+    background: "#f8fafc",
+    color: "#52606d",
+    fontSize: "16px",
+    fontWeight: 800
+  },
+  deleteButton: {
+    minHeight: "42px",
+    border: "1px solid #c74242",
+    borderRadius: "8px",
+    padding: "10px 16px",
+    background: "#ffffff",
+    color: "#9f1d1d",
+    fontSize: "16px",
+    fontWeight: 900,
+    cursor: "pointer"
   },
   recordingOn: {
     margin: 0,
@@ -1664,3 +2089,5 @@ const signupStyles: Record<string, CSSProperties> = {
     fontSize: "18px"
   }
 };
+
+
