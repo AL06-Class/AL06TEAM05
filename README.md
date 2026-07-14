@@ -12,14 +12,23 @@
 
 ## 실행 방법
 
-1. 의존성을 설치합니다.
-   - 권장: `bun install`
-2. 환경변수 파일을 준비합니다.
+패키지 관리는 npm만 사용하고, 개발 환경은 Docker Compose로 실행합니다.
+
+1. 환경변수 파일을 준비합니다.
    - `.env.example`을 참고해 `.env`를 만듭니다.
-3. 개발 서버를 실행합니다.
-   - `bun run dev`
-4. 배포 전 빌드를 확인합니다.
-   - `bun run build`
+2. Docker로 개발 서버를 실행합니다.
+   - `docker compose up`
+   - 컨테이너에서 `npm ci` 후 `npm run dev`가 자동 실행됩니다.
+3. 브라우저에서 확인합니다.
+   - `http://localhost:5173`
+4. 배포 전 Docker 환경에서 빌드를 확인합니다.
+   - `docker compose run --rm web npm run build`
+
+로컬에서 패키지 명령이 필요한 경우에도 Bun을 사용하지 않고 npm 명령만 사용합니다.
+
+- 의존성 설치: `npm ci`
+- 개발 서버: `npm run dev`
+- 빌드: `npm run build`
 
 ## 문서 검토 순서
 
@@ -99,7 +108,8 @@
 - Vite
 - Tailwind CSS
 - Firebase
-- Bun
+- Docker Compose
+- npm
 
 ## 주의사항
 
@@ -116,3 +126,15 @@
 ### 변경 이력
 
 - 2026-06-30: 온보딩 1단계에서 팀장을 안미선으로 확정
+
+## 실행 환경
+
+### 최종 결정
+
+- 개발 환경은 Docker Compose로 실행
+- 패키지 관리는 npm만 사용
+- 의존성 잠금 파일은 `package-lock.json` 기준
+
+### 변경 이력
+
+- 2026-07-14: 실행 환경을 Docker Compose로, 패키지 관리 도구를 npm으로 통일
