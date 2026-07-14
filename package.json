@@ -6,9 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "functions:serve": "node scripts/start-functions-emulator.cjs",
     "preview": "vite preview"
   },
   "dependencies": {
+    "firebase": "^12.16.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
