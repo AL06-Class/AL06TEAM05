@@ -1,5 +1,6 @@
 ﻿import { FormEvent, useMemo, useRef, useState, type CSSProperties } from "react";
 import { LoginPage } from "./LoginPage";
+import { BusinessOwnerPage } from "./pages/BusinessOwnerPage";
 import {
   requestResumeDraft,
   type ResumeAiResponse
@@ -46,7 +47,13 @@ type TalentProfile = {
   };
 };
 
-type PageView = "home" | "login" | "applicantSignup" | "recruiterSignup" | "talentMatches";
+type PageView =
+  | "home"
+  | "login"
+  | "applicantSignup"
+  | "recruiterSignup"
+  | "talentMatches"
+  | "businessOwner";
 
 type SignupStep = "business" | "contact" | "hiring";
 
@@ -249,6 +256,10 @@ export default function App() {
     return <TalentMatches onBack={() => setPageView("home")} />;
   }
 
+  if (pageView === "businessOwner") {
+    return <BusinessOwnerPage onBack={() => setPageView("home")} />;
+  }
+
   return (
     <main className="app-shell">
       <header className="top-bar" aria-label="서비스 상단 메뉴">
@@ -387,6 +398,10 @@ export default function App() {
               <span>{action.description}</span>
             </button>
           ))}
+          <button className="action-card" onClick={() => setPageView("businessOwner")} type="button">
+            <strong>사업자 페이지</strong>
+            <span>지역 일자리 정보를 빠르게 올립니다.</span>
+          </button>
         </div>
       </section>
 
@@ -2089,5 +2104,6 @@ const signupStyles: Record<string, CSSProperties> = {
     fontSize: "18px"
   }
 };
+
 
 

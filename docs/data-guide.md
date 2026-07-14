@@ -397,9 +397,11 @@
 - DB 연결 기준: 화면 컴포넌트와 데이터 접근 코드를 분리하고 Firebase 연결 코드는 한 곳에서 관리
 - 공통 이름 사전 기준: 새 컬렉션, 필드, 상태값, 역할 값은 구현 전에 이 문서에 먼저 추가
 - 구인자 회원가입 데이터 기준: `companies`에 `companyName`, `businessRegistrationNumber`, `businessAddress`, `contactName`, `contactPhone`, `contactEmail`, `hiringRegion`을 초안으로 사용
+- 구인자 상세 입력 필드 기준: `workSchedule`, `payText`, `requiredHeadcount`, `workIntensity`를 화면 초안 필드로 사용
 
 ## 변경 이력
 
+- 2026-07-08: 구인자 상세 입력을 위해 `workSchedule`, `payText`, `requiredHeadcount`, `workIntensity` 필드 이름 추가
 - 2026-07-06: 구인자 회원가입 화면 병합을 위해 기업/담당자 기본 필드 초안 추가
 - 2026-07-03: PRD 1.0 시니어 지역 일자리 MVP 구현을 위해 시니어 구직자 프로필, 구술 경력, 지역 일자리, 제휴 기관, 매칭/연결 상태 이름 추가
 - 2026-05-29: SPA와 역할 기반 데이터 기준 반영
