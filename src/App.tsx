@@ -1,5 +1,24 @@
 ﻿import { FormEvent, useMemo, useRef, useState, type CSSProperties } from "react";
+import {
+  ArrowRight,
+  Banknote,
+  Briefcase,
+  Building2,
+  Clock,
+  LogIn,
+  MapPin,
+  Navigation,
+  UserPlus,
+  Users
+} from "lucide-react";
+import localJobMap from "./assets/local-job-map.png";
+import { Button } from "./components/ui/button";
+import { Card, CardContent } from "./components/ui/card";
+import { Field, FieldLabel } from "./components/ui/field";
+import { Input } from "./components/ui/input";
+import { Textarea } from "./components/ui/textarea";
 import { LoginPage } from "./LoginPage";
+import { cn } from "./lib/utils";
 import { BusinessOwnerPage } from "./pages/BusinessOwnerPage";
 import {
   requestResumeDraft,
@@ -261,164 +280,387 @@ export default function App() {
   }
 
   return (
-    <main className="app-shell">
-      <header className="top-bar" aria-label="서비스 상단 메뉴">
-        <a className="brand" href="#home" aria-label="메인페이지로 이동">
+    <main className="relative isolate mx-auto min-h-dvh w-full max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
+      <div
+        className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-[linear-gradient(180deg,color-mix(in_srgb,var(--accent)_58%,var(--background)),var(--background)_760px)]"
+        aria-hidden="true"
+      >
+        <span className="absolute -top-32 left-[6%] size-[520px] rounded-full bg-primary/10 blur-3xl" />
+        <span className="absolute -right-24 top-20 size-[560px] rounded-full bg-brand/10 blur-3xl" />
+      </div>
+      <header
+        className="sticky top-3 z-50 mb-8 grid gap-3 rounded-2xl border border-white/70 bg-card/80 p-2 shadow-[0_18px_50px_-30px_rgba(23,59,101,0.65)] backdrop-blur-xl sm:p-3 xl:grid-cols-[auto_1fr_auto] xl:items-center"
+        aria-label="서비스 상단 메뉴"
+      >
+        <a
+          className="inline-flex min-h-12 items-center gap-3 self-start rounded-xl px-2 text-xl font-black tracking-tight text-brand outline-none transition hover:bg-accent/50 focus-visible:ring-3 focus-visible:ring-ring/40"
+          href="#home"
+          aria-label="메인페이지로 이동"
+        >
+          <span className="grid size-10 place-items-center rounded-xl bg-gradient-to-br from-primary to-brand text-brand-foreground shadow-lg shadow-primary/20">
+            <MapPin className="size-5" aria-hidden="true" />
+          </span>
           메인페이지
         </a>
-        <div className="top-actions" aria-label="주요 등록 화면">
-          <button
-            className="top-action-button"
+        <nav className="hidden items-center justify-center gap-1 xl:flex" aria-label="홈 화면 바로가기">
+          <a
+            className="rounded-lg px-3 py-2 text-sm font-bold text-muted-foreground transition hover:bg-accent hover:text-foreground"
+            href="#home"
+          >
+            지역 일자리
+          </a>
+          <a
+            className="rounded-lg px-3 py-2 text-sm font-bold text-muted-foreground transition hover:bg-accent hover:text-foreground"
+            href="#quick-start"
+          >
+            처음 시작하기
+          </a>
+          <a
+            className="rounded-lg px-3 py-2 text-sm font-bold text-muted-foreground transition hover:bg-accent hover:text-foreground"
+            href="#flow"
+          >
+            이용 흐름
+          </a>
+        </nav>
+        <div
+          className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end"
+          aria-label="주요 등록 화면"
+        >
+          <Button
+            className="w-full shadow-sm sm:w-auto"
+            size="sm"
+            variant="secondary"
             type="button"
             onClick={() => setPageView("applicantSignup")}
           >
+            <UserPlus data-icon="inline-start" aria-hidden="true" />
             구직자 등록
-          </button>
-          <button
-            className="top-action-button"
+          </Button>
+          <Button
+            className="w-full shadow-sm sm:w-auto"
+            size="sm"
             type="button"
             onClick={() => setPageView("recruiterSignup")}
           >
+            <Briefcase data-icon="inline-start" aria-hidden="true" />
             구인자 등록
-          </button>
-          <button
-            className="top-action-button top-action-button-secondary"
+          </Button>
+          <Button
+            className="w-full bg-brand text-brand-foreground shadow-sm hover:bg-brand/90 sm:w-auto"
+            size="sm"
             type="button"
             onClick={() => setPageView("talentMatches")}
           >
+            <Users data-icon="inline-start" aria-hidden="true" />
             지역 인재 보기
-          </button>
-          <button className="login-button" type="button" onClick={() => setPageView("login")}>
+          </Button>
+          <Button
+            className="w-full bg-card shadow-sm sm:w-auto"
+            size="sm"
+            variant="outline"
+            type="button"
+            onClick={() => setPageView("login")}
+          >
+            <LogIn data-icon="inline-start" aria-hidden="true" />
             로그인
-          </button>
+          </Button>
         </div>
       </header>
 
-      <section className="hero hero-map-only" id="home" aria-label="지역 일자리 지도">
-        <div className="match-panel" aria-label="지역 일자리 지도">
-          <div className="match-map" aria-label="등록된 일자리 위치">
-            <div className="map-copy">
-              <strong>일자리</strong>
-              <span>등록 일자리 표시</span>
-            </div>
-            {localJobs.map((job) => (
-              <button
-                aria-label={`${job.region} ${job.title}`}
-                aria-pressed={selectedJobId === job.id}
-                className={`map-marker ${job.markerClass} ${
-                  selectedJobId === job.id ? "is-selected" : ""
-                }`}
-                key={job.id}
-                onClick={() => setSelectedJobId(job.id)}
-                type="button"
-              >
-                <span className="marker-star" aria-hidden="true" />
-              </button>
-            ))}
-            <button className="map-action" type="button">
-              내 주변 일자리 보기
-            </button>
-          </div>
-          <div className="match-content">
-            <article className="selected-job" aria-live="polite">
-              <p className="section-kicker">선택한 일자리</p>
-              <h2>{selectedJob.title}</h2>
-              <dl className="job-meta">
-                <div>
-                  <dt>거리</dt>
-                  <dd>{selectedJob.distance}</dd>
-                </div>
-                <div>
-                  <dt>근무</dt>
-                  <dd>{selectedJob.schedule}</dd>
-                </div>
-                <div>
-                  <dt>급여</dt>
-                  <dd>{selectedJob.pay}</dd>
-                </div>
-              </dl>
-              <p>{selectedJob.fit}</p>
-              <button
-                className="primary-action"
-                type="button"
-                onClick={() => setPageView("talentMatches")}
-              >
-                연결 가능한 인재 보기
-              </button>
-            </article>
-            <ul className="job-list">
+      <section className="pt-2" id="home" aria-label="지역 일자리 지도">
+        <Card
+          className="overflow-hidden rounded-[30px] border-white/80 bg-card/90 shadow-[0_30px_90px_-45px_rgba(23,59,101,0.65)] ring-1 ring-border/50 backdrop-blur-sm"
+          aria-label="지역 일자리 지도"
+        >
+          <CardContent className="p-3 sm:p-5 lg:p-6">
+            <div
+              className="relative mb-5 min-h-[320px] overflow-hidden rounded-[24px] border border-white/80 bg-muted shadow-inner sm:min-h-[380px]"
+              aria-label="등록된 일자리 위치"
+            >
+              <img
+                className="absolute inset-0 size-full object-cover"
+                src={localJobMap}
+                alt=""
+                aria-hidden="true"
+              />
+              <span
+                className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/[0.04] via-transparent to-brand/[0.08]"
+                aria-hidden="true"
+              />
+              <div className="absolute left-1/2 top-[44%] z-10 grid min-w-48 -translate-x-1/2 -translate-y-1/2 place-items-center gap-2 rounded-3xl border border-white/70 bg-card/70 px-8 py-6 text-center shadow-[0_24px_60px_-32px_rgba(23,59,101,0.65)] backdrop-blur-xl">
+                <span className="grid size-12 place-items-center rounded-2xl bg-gradient-to-br from-primary to-brand text-primary-foreground shadow-lg shadow-primary/20">
+                  <MapPin className="size-6" aria-hidden="true" />
+                </span>
+                <strong className="text-2xl font-black tracking-tight text-foreground">일자리</strong>
+                <span className="text-base font-semibold text-muted-foreground">등록 일자리 표시</span>
+              </div>
               {localJobs.map((job) => (
-                <li className="job-item" key={job.id}>
-                  <button
-                    aria-pressed={selectedJobId === job.id}
-                    className={selectedJobId === job.id ? "job-card is-selected" : "job-card"}
-                    onClick={() => setSelectedJobId(job.id)}
-                    type="button"
+                <button
+                  aria-label={`${job.region} ${job.title}`}
+                  aria-pressed={selectedJobId === job.id}
+                  className={cn(
+                    "group absolute z-20 grid size-14 place-items-center rounded-full outline-none transition duration-300 hover:-translate-y-1 hover:scale-105 focus-visible:ring-4 focus-visible:ring-primary/25 sm:size-16",
+                    job.markerClass === "marker-north" && "left-[43%] top-10 max-sm:left-[48%]",
+                    job.markerClass === "marker-west" && "left-[17%] top-32 max-sm:left-[12%]",
+                    job.markerClass === "marker-south" &&
+                      "bottom-[72px] right-[33%] max-sm:bottom-[74px] max-sm:right-[22%]",
+                    selectedJobId === job.id && "scale-110 bg-card/60 ring-4 ring-primary/20 backdrop-blur-sm"
+                  )}
+                  key={job.id}
+                  onClick={() => setSelectedJobId(job.id)}
+                  type="button"
+                >
+                  <span
+                    className={cn(
+                      "grid size-11 -rotate-45 place-items-center rounded-[16px_16px_16px_4px] text-primary-foreground shadow-[0_14px_28px_-12px_rgba(23,59,101,0.75)] transition-colors",
+                      selectedJobId === job.id
+                        ? "bg-primary"
+                        : "bg-brand group-hover:bg-primary"
+                    )}
+                    aria-hidden="true"
                   >
-                    <span>
-                      <strong>{job.title}</strong>
-                      <small>{job.distance}</small>
-                    </span>
-                    <span>
-                      {job.region} · {job.workType}
-                    </span>
-                    <p>
-                      {job.schedule} · {job.partner}
-                    </p>
-                  </button>
-                </li>
+                    <MapPin className="size-5 rotate-45" />
+                  </span>
+                </button>
               ))}
-            </ul>
-          </div>
-        </div>
+              <Button
+                className="absolute bottom-4 left-4 right-4 z-20 border-white/70 bg-card/80 text-brand shadow-[0_16px_36px_-20px_rgba(23,59,101,0.65)] backdrop-blur-xl hover:bg-card sm:bottom-6 sm:left-auto sm:right-6"
+                variant="outline"
+                type="button"
+              >
+                <Navigation data-icon="inline-start" aria-hidden="true" />
+                내 주변 일자리 보기
+              </Button>
+            </div>
+
+            <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(260px,0.9fr)_minmax(0,1.4fr)]">
+              <article
+                className="relative grid min-w-0 content-start gap-5 overflow-hidden rounded-[24px] border border-primary/15 bg-gradient-to-br from-accent/80 via-card to-card p-5 shadow-[0_18px_45px_-32px_rgba(37,99,235,0.65)] sm:p-6"
+                aria-live="polite"
+              >
+                <span className="absolute right-0 top-0 size-32 translate-x-12 -translate-y-12 rounded-full bg-primary/10 blur-2xl" aria-hidden="true" />
+                <p className="mb-0 text-sm font-black tracking-[0.12em] text-primary">
+                  선택한 일자리
+                </p>
+                <h2 className="m-0 text-2xl font-black tracking-tight text-foreground sm:text-3xl">
+                  {selectedJob.title}
+                </h2>
+                <dl className="m-0 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                  <div className="grid gap-1 rounded-xl border border-white/80 bg-card/90 p-3 shadow-sm">
+                    <dt className="flex items-center gap-1.5 text-sm font-bold text-muted-foreground">
+                      <MapPin className="size-4" aria-hidden="true" /> 거리
+                    </dt>
+                    <dd className="m-0 text-base font-black text-foreground">{selectedJob.distance}</dd>
+                  </div>
+                  <div className="grid gap-1 rounded-xl border border-white/80 bg-card/90 p-3 shadow-sm">
+                    <dt className="flex items-center gap-1.5 text-sm font-bold text-muted-foreground">
+                      <Clock className="size-4" aria-hidden="true" /> 근무
+                    </dt>
+                    <dd className="m-0 text-base font-black text-foreground">{selectedJob.schedule}</dd>
+                  </div>
+                  <div className="grid gap-1 rounded-xl border border-white/80 bg-card/90 p-3 shadow-sm">
+                    <dt className="flex items-center gap-1.5 text-sm font-bold text-muted-foreground">
+                      <Banknote className="size-4" aria-hidden="true" /> 급여
+                    </dt>
+                    <dd className="m-0 text-base font-black text-foreground">{selectedJob.pay}</dd>
+                  </div>
+                </dl>
+                <p className="mb-0 text-base font-medium leading-relaxed text-muted-foreground sm:text-lg">
+                  {selectedJob.fit}
+                </p>
+                <Button
+                  className="w-full bg-gradient-to-r from-primary to-brand shadow-lg shadow-primary/15 hover:opacity-90"
+                  type="button"
+                  onClick={() => setPageView("talentMatches")}
+                >
+                  연결 가능한 인재 보기
+                  <ArrowRight data-icon="inline-end" aria-hidden="true" />
+                </Button>
+              </article>
+
+              <ul className="m-0 grid min-w-0 list-none gap-3 p-0">
+                {localJobs.map((job) => (
+                  <li className="min-w-0" key={job.id}>
+                    <button
+                      aria-pressed={selectedJobId === job.id}
+                      className={cn(
+                        "group relative grid min-h-[132px] w-full min-w-0 gap-2 overflow-hidden rounded-[20px] border p-4 text-left outline-none transition duration-300 focus-visible:ring-4 focus-visible:ring-ring/25",
+                        selectedJobId === job.id
+                          ? "border-primary/60 bg-gradient-to-r from-primary/[0.09] to-card shadow-[inset_4px_0_0_var(--primary),0_16px_36px_-28px_var(--brand)]"
+                          : "border-border/70 bg-card/90 hover:-translate-y-1 hover:border-primary/30 hover:bg-card hover:shadow-[0_20px_45px_-30px_rgba(23,59,101,0.55)]"
+                      )}
+                      onClick={() => setSelectedJobId(job.id)}
+                      type="button"
+                    >
+                      <span className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 max-sm:grid-cols-1 max-sm:gap-1">
+                        <strong className="min-w-0 text-lg font-black text-foreground group-hover:text-primary">
+                          {job.title}
+                        </strong>
+                        <small className="whitespace-nowrap rounded-full bg-secondary px-2.5 py-1 text-sm font-black text-secondary-foreground max-sm:justify-self-start">
+                          {job.distance}
+                        </small>
+                      </span>
+                      <span className="text-base font-semibold leading-relaxed text-muted-foreground">
+                        {job.region} · {job.workType}
+                      </span>
+                      <p className="mb-0 text-base leading-relaxed text-muted-foreground">
+                        {job.schedule} · {job.partner}
+                      </p>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </CardContent>
+        </Card>
       </section>
 
-      <section className="quick-start" aria-labelledby="quick-start-title">
-        <div>
-          <p className="section-kicker">처음 오셨나요?</p>
-          <h2 id="quick-start-title">원하는 방식으로 바로 시작할 수 있습니다</h2>
+      <section
+        className="mt-16 grid gap-8 rounded-[30px] border border-white/80 bg-card/65 p-6 shadow-[0_24px_70px_-45px_rgba(23,59,101,0.5)] backdrop-blur-sm sm:p-8 lg:grid-cols-[minmax(220px,360px)_minmax(0,1fr)] lg:items-start"
+        id="quick-start"
+        aria-labelledby="quick-start-title"
+      >
+        <div className="min-w-0">
+          <p className="mb-3 text-sm font-black tracking-[0.12em] text-primary">처음 오셨나요?</p>
+          <h2
+            className="m-0 text-2xl font-black leading-tight tracking-tight text-foreground sm:text-3xl"
+            id="quick-start-title"
+          >
+            원하는 방식으로 바로 시작할 수 있습니다
+          </h2>
         </div>
-        <div className="action-grid">
-          {mainActions.map((action) => (
-            <button
-              className="action-card"
-              key={action.label}
-              onClick={() => {
-                if (action.label === "구직자 등록") {
-                  setPageView("applicantSignup");
-                }
+        <div className="grid min-w-0 gap-3 sm:grid-cols-2">
+          {mainActions.map((action) => {
+            const ActionIcon = action.label === "구직자 등록" ? UserPlus : Briefcase;
 
-                if (action.label === "구인자 등록") {
-                  setPageView("recruiterSignup");
-                }
-              }}
-              type="button"
-            >
-              <strong>{action.label}</strong>
-              <span>{action.description}</span>
-            </button>
-          ))}
-          <button className="action-card" onClick={() => setPageView("businessOwner")} type="button">
-            <strong>사업자 페이지</strong>
-            <span>지역 일자리 정보를 빠르게 올립니다.</span>
+            return (
+              <button
+                className={cn(
+                  "group grid min-h-40 gap-4 overflow-hidden rounded-[22px] border p-5 text-left shadow-sm outline-none transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_50px_-32px_rgba(23,59,101,0.65)] focus-visible:ring-4 focus-visible:ring-ring/25",
+                  action.label === "구직자 등록"
+                    ? "border-primary/20 bg-gradient-to-br from-primary/[0.09] via-card to-card hover:border-primary/40"
+                    : "border-brand/20 bg-gradient-to-br from-brand/[0.09] via-card to-card hover:border-brand/40"
+                )}
+                key={action.label}
+                onClick={() => {
+                  if (action.label === "구직자 등록") {
+                    setPageView("applicantSignup");
+                  }
+
+                  if (action.label === "구인자 등록") {
+                    setPageView("recruiterSignup");
+                  }
+                }}
+                type="button"
+              >
+                <strong className="flex items-center gap-3 text-lg font-black text-foreground">
+                  <span className="grid size-11 place-items-center rounded-xl bg-gradient-to-br from-primary to-brand text-primary-foreground shadow-lg shadow-primary/15 transition group-hover:scale-105">
+                    <ActionIcon className="size-5" aria-hidden="true" />
+                  </span>
+                  {action.label}
+                  <ArrowRight className="ml-auto size-5 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-primary" aria-hidden="true" />
+                </strong>
+                <span className="text-base leading-relaxed text-muted-foreground">{action.description}</span>
+              </button>
+            );
+          })}
+          <button
+            className="group grid min-h-40 gap-4 overflow-hidden rounded-[22px] border border-brand/20 bg-gradient-to-br from-brand/[0.12] via-card to-card p-5 text-left shadow-sm outline-none transition duration-300 hover:-translate-y-1 hover:border-brand/40 hover:shadow-[0_22px_50px_-32px_rgba(23,59,101,0.65)] focus-visible:ring-4 focus-visible:ring-ring/25"
+            onClick={() => setPageView("businessOwner")}
+            type="button"
+          >
+            <strong className="flex items-center gap-3 text-lg font-black text-foreground">
+              <span className="grid size-11 place-items-center rounded-xl bg-gradient-to-br from-brand to-primary text-brand-foreground shadow-lg shadow-brand/15 transition group-hover:scale-105">
+                <Building2 className="size-5" aria-hidden="true" />
+              </span>
+              사업자 페이지
+              <ArrowRight className="ml-auto size-5 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-primary" aria-hidden="true" />
+            </strong>
+            <span className="text-base leading-relaxed text-muted-foreground">
+              지역 일자리 정보를 빠르게 올립니다.
+            </span>
           </button>
         </div>
       </section>
 
-      <section className="flow-section" aria-labelledby="flow-title">
-        <div>
-          <p className="section-kicker">3단계 흐름</p>
-          <h2 id="flow-title">등록부터 매칭까지 짧게 안내합니다</h2>
+      <section
+        className="mt-16 grid gap-8 lg:grid-cols-[minmax(220px,360px)_minmax(0,1fr)] lg:items-start"
+        id="flow"
+        aria-labelledby="flow-title"
+      >
+        <div className="min-w-0">
+          <p className="mb-3 text-sm font-black tracking-[0.12em] text-primary">3단계 흐름</p>
+          <h2
+            className="m-0 text-2xl font-black leading-tight tracking-tight text-foreground sm:text-3xl"
+            id="flow-title"
+          >
+            등록부터 매칭까지 짧게 안내합니다
+          </h2>
         </div>
-        <ol className="step-list">
+        <ol className="relative m-0 grid min-w-0 list-none gap-3 p-0 before:absolute before:bottom-10 before:left-6 before:top-10 before:w-px before:bg-gradient-to-b before:from-primary/60 before:via-border before:to-brand/50">
           {processSteps.map((step, index) => (
-            <li key={step}>
-              <span>{index + 1}</span>
-              <p>{step}</p>
+            <li
+              className="relative grid grid-cols-[48px_minmax(0,1fr)] items-center gap-4 rounded-[20px] border border-border/70 bg-card/90 p-4 shadow-[0_14px_34px_-28px_rgba(23,59,101,0.55)] backdrop-blur-sm transition hover:border-primary/25 hover:shadow-md"
+              key={step}
+            >
+              <span className="relative z-10 grid size-12 place-items-center rounded-xl bg-gradient-to-br from-primary to-brand text-lg font-black text-primary-foreground shadow-lg shadow-primary/15">
+                {index + 1}
+              </span>
+              <p className="mb-0 text-base font-semibold leading-relaxed text-muted-foreground">
+                {step}
+              </p>
             </li>
           ))}
         </ol>
       </section>
+
+      <footer className="relative mt-16 overflow-hidden rounded-[30px] bg-gradient-to-br from-brand via-[#153453] to-[#0d2742] px-6 py-8 text-brand-foreground shadow-[0_28px_80px_-42px_rgba(13,39,66,0.9)] sm:px-8 sm:py-10">
+        <span
+          className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full bg-primary/25 blur-3xl"
+          aria-hidden="true"
+        />
+        <div className="relative grid gap-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+          <div className="grid max-w-xl gap-4">
+            <a
+              className="inline-flex w-fit items-center gap-3 rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-white/40"
+              href="#home"
+              aria-label="메인페이지로 이동"
+            >
+              <span className="grid size-11 place-items-center rounded-xl bg-white/12 text-white ring-1 ring-white/15 backdrop-blur-sm">
+                <MapPin className="size-5" aria-hidden="true" />
+              </span>
+              <strong className="text-xl font-black tracking-tight">Blogle2</strong>
+            </a>
+            <p className="mb-0 text-base font-semibold leading-relaxed text-white/70 sm:text-lg">
+              등록부터 매칭까지 짧게 안내합니다
+            </p>
+          </div>
+          <nav className="flex flex-wrap gap-2" aria-label="푸터 바로가기">
+            <a
+              className="rounded-lg px-3 py-2 text-sm font-bold text-white/65 transition hover:bg-white/10 hover:text-white"
+              href="#home"
+            >
+              지역 일자리
+            </a>
+            <a
+              className="rounded-lg px-3 py-2 text-sm font-bold text-white/65 transition hover:bg-white/10 hover:text-white"
+              href="#quick-start"
+            >
+              처음 시작하기
+            </a>
+            <a
+              className="rounded-lg px-3 py-2 text-sm font-bold text-white/65 transition hover:bg-white/10 hover:text-white"
+              href="#flow"
+            >
+              이용 흐름
+            </a>
+          </nav>
+        </div>
+        <div className="relative mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-5 text-sm font-semibold text-white/45">
+          <span>메인페이지</span>
+          <span>지역 일자리 연결</span>
+        </div>
+      </footer>
     </main>
   );
 }
@@ -604,9 +846,9 @@ function ApplicantSignup({ onBack }: { onBack: () => void }) {
     <main style={applicantStyles.page}>
       <section style={applicantStyles.shell} aria-labelledby="applicant-title">
         <header style={applicantStyles.header}>
-          <button type="button" style={applicantStyles.backLink} onClick={onBack}>
+          <Button type="button" variant="ghost" style={applicantStyles.backLink} onClick={onBack}>
             메인으로 돌아가기
-          </button>
+          </Button>
           <p style={applicantStyles.eyebrow}>구직자 간편 등록</p>
           <h1 id="applicant-title" style={applicantStyles.title}>
             사진 확인 후 이력서를 등록합니다.
@@ -782,19 +1024,19 @@ function ApplicantSignup({ onBack }: { onBack: () => void }) {
                 <ResumeRow label="희망 지역" value={resumeText?.workArea ?? ""} />
               </dl>
               <p style={applicantStyles.panelText}>버튼을 누른 뒤 PDF 저장을 선택해주세요.</p>
-              <button type="button" style={applicantStyles.primaryButton} onClick={() => window.print()}>
+              <Button type="button" style={applicantStyles.primaryButton} onClick={() => window.print()}>
                 이력서 다운로드
-              </button>
+              </Button>
             </>
           )}
         </section>
 
         <footer style={applicantStyles.footer}>
-          <button type="button" style={applicantStyles.secondaryButton} onClick={goBack}>
+          <Button type="button" variant="secondary" style={applicantStyles.secondaryButton} onClick={goBack}>
             {stepIndex === 0 ? "메인으로" : "이전"}
-          </button>
+          </Button>
           {currentStep.id !== "resumeResult" && (
-            <button
+            <Button
               type="button"
               style={{
                 ...applicantStyles.primaryButton,
@@ -804,7 +1046,7 @@ function ApplicantSignup({ onBack }: { onBack: () => void }) {
               onClick={handleNext}
             >
               {nextButtonText}
-            </button>
+            </Button>
           )}
         </footer>
       </section>
@@ -900,9 +1142,9 @@ function PhotoList({
       <p style={applicantStyles.photoListTitle}>올린 사진 목록</p>
       <div style={applicantStyles.photoItem}>
         <span style={applicantStyles.fileName}>{image.fileName}</span>
-        <button type="button" style={applicantStyles.deleteButton} onClick={onDelete}>
+        <Button type="button" variant="destructive" style={applicantStyles.deleteButton} onClick={onDelete}>
           삭제
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -926,16 +1168,20 @@ function QuestionField({
   onChange: (value: string) => void;
 }) {
   return (
-    <div style={applicantStyles.field}>
-      <span style={applicantStyles.fieldLabel}>{label}</span>
-      <button
+    <Field style={applicantStyles.field}>
+      <FieldLabel htmlFor={`${field}-answer`} style={applicantStyles.fieldLabel}>
+        {label}
+      </FieldLabel>
+      <Button
         type="button"
+        variant={isRecording ? "default" : "secondary"}
         style={isRecording ? applicantStyles.recordButtonOn : applicantStyles.recordButton}
         onClick={() => onRecord(field)}
       >
         {isRecording ? "녹음 멈추기" : "말로 답하기"}
-      </button>
-      <textarea
+      </Button>
+      <Textarea
+        id={`${field}-answer`}
         value={value}
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
@@ -945,7 +1191,7 @@ function QuestionField({
       <p style={isRecording ? applicantStyles.recordingOn : applicantStyles.recordingOff}>
         {isRecording ? "듣고 있습니다. 편하게 말씀해주세요." : "녹음 후 글자가 맞는지 확인해주세요."}
       </p>
-    </div>
+    </Field>
   );
 }
 
@@ -965,9 +1211,9 @@ function TalentMatches({ onBack }: { onBack: () => void }) {
       <section style={talentStyles.shell} aria-labelledby="talent-title">
         <header style={talentStyles.header}>
           <div>
-            <button type="button" style={talentStyles.backLink} onClick={onBack}>
+            <Button type="button" variant="ghost" style={talentStyles.backLink} onClick={onBack}>
               메인으로 돌아가기
-            </button>
+            </Button>
             <p style={talentStyles.eyebrow}>자영업자 페이지</p>
             <h1 id="talent-title" style={talentStyles.title}>
               연결 가능한 지역 인재
@@ -976,14 +1222,14 @@ function TalentMatches({ onBack }: { onBack: () => void }) {
               가까운 지역에서 바로 일할 수 있는 분을 조건에 맞춰 추천합니다.
             </p>
           </div>
-          <button
+          <Button
             type="button"
             style={talentStyles.primaryButton}
             aria-expanded={isNearbyMapOpen}
             onClick={() => setIsNearbyMapOpen((current) => !current)}
           >
             {isNearbyMapOpen ? "목록만 보기" : "가까운 분 보기"}
-          </button>
+          </Button>
         </header>
 
         {isNearbyMapOpen && (
@@ -1014,9 +1260,15 @@ function TalentMatches({ onBack }: { onBack: () => void }) {
 
         <div style={talentStyles.filterRow} aria-label="추천 조건">
           {["남원읍 기준", "오전 근무", "주방/매장 업무", "기관 확인"].map((filter) => (
-            <button key={filter} type="button" style={talentStyles.filterButton}>
+            <Button
+              key={filter}
+              type="button"
+              variant="outline"
+              size="xs"
+              style={talentStyles.filterButton}
+            >
               {filter}
-            </button>
+            </Button>
           ))}
         </div>
 
@@ -1066,9 +1318,9 @@ function TalentMatches({ onBack }: { onBack: () => void }) {
                 </div>
               </dl>
 
-              <button type="button" style={talentStyles.requestButton}>
+              <Button type="button" style={talentStyles.requestButton}>
                 연결 요청
-              </button>
+              </Button>
             </article>
           ))}
         </section>
@@ -1163,10 +1415,10 @@ function RecruiterSignup({ onBack }: { onBack: () => void }) {
             </div>
           </dl>
           <div style={signupStyles.actions}>
-            <button type="button" style={signupStyles.secondaryButton} onClick={onBack}>
+            <Button type="button" variant="secondary" style={signupStyles.secondaryButton} onClick={onBack}>
               메인으로
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
               style={signupStyles.primaryButton}
               onClick={() => {
@@ -1176,7 +1428,7 @@ function RecruiterSignup({ onBack }: { onBack: () => void }) {
               }}
             >
               새 가입 신청 작성
-            </button>
+            </Button>
           </div>
         </section>
       </main>
@@ -1187,9 +1439,9 @@ function RecruiterSignup({ onBack }: { onBack: () => void }) {
     <main style={signupStyles.page}>
       <section style={signupStyles.shell} aria-labelledby="signup-title">
         <div style={signupStyles.header}>
-          <button type="button" style={signupStyles.backLink} onClick={onBack}>
+          <Button type="button" variant="ghost" style={signupStyles.backLink} onClick={onBack}>
             메인으로 돌아가기
-          </button>
+          </Button>
           <p style={signupStyles.eyebrow}>Blogle2 구인자 회원가입</p>
           <h1 id="signup-title" style={signupStyles.title}>
             지역 일자리를 등록할 사업장 정보를 입력해주세요.
@@ -1297,23 +1549,26 @@ function RecruiterSignup({ onBack }: { onBack: () => void }) {
                 placeholder="예: 주방 보조, 농산물 포장, 매장 정리"
                 onChange={(value) => updateField("workType", value)}
               />
-              <label style={{ ...signupStyles.field, ...signupStyles.fullWidthField }}>
-                <span style={signupStyles.label}>추가 요청 사항</span>
-                <textarea
+              <Field style={{ ...signupStyles.field, ...signupStyles.fullWidthField }}>
+                <FieldLabel htmlFor="recruiter-note" style={signupStyles.label}>
+                  추가 요청 사항
+                </FieldLabel>
+                <Textarea
+                  id="recruiter-note"
                   value={form.note}
                   placeholder="근무 시간, 필요한 인원, 우대 조건을 적어주세요."
                   onChange={(event) => updateField("note", event.target.value)}
                   style={{ ...signupStyles.input, ...signupStyles.textarea }}
                 />
-              </label>
+              </Field>
             </div>
           )}
 
           <div style={signupStyles.actions}>
-            <button type="button" style={signupStyles.secondaryButton} onClick={goBack}>
+            <Button type="button" variant="secondary" style={signupStyles.secondaryButton} onClick={goBack}>
               이전
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
               style={{
                 ...signupStyles.primaryButton,
@@ -1322,7 +1577,7 @@ function RecruiterSignup({ onBack }: { onBack: () => void }) {
               disabled={!isCurrentStepReady}
             >
               {currentStep === "hiring" ? "가입 신청 완료" : "다음"}
-            </button>
+            </Button>
           </div>
         </form>
       </section>
@@ -1346,16 +1601,16 @@ function SignupField({
   onChange
 }: SignupFieldProps) {
   return (
-    <label style={signupStyles.field}>
-      <span style={signupStyles.label}>{label}</span>
-      <input
+    <Field style={signupStyles.field}>
+      <FieldLabel style={signupStyles.label}>{label}</FieldLabel>
+      <Input
         type={type}
         value={value}
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
         style={signupStyles.input}
       />
-    </label>
+    </Field>
   );
 }
 
@@ -1380,7 +1635,7 @@ const applicantStyles: Record<string, CSSProperties> = {
     margin: "0 0 18px",
     padding: 0,
     border: 0,
-    color: "#1769aa",
+    color: "var(--primary)",
     background: "transparent",
     fontSize: "16px",
     fontWeight: 800,
@@ -1536,11 +1791,11 @@ const applicantStyles: Record<string, CSSProperties> = {
   },
   deleteButton: {
     minHeight: "42px",
-    border: "1px solid #c74242",
+    border: "1px solid var(--destructive)",
     borderRadius: "8px",
     padding: "10px 16px",
-    background: "#ffffff",
-    color: "#9f1d1d",
+    background: "var(--background)",
+    color: "var(--destructive)",
     fontSize: "16px",
     fontWeight: 900,
     cursor: "pointer"
@@ -1611,22 +1866,22 @@ const applicantStyles: Record<string, CSSProperties> = {
   },
   primaryButton: {
     minHeight: "48px",
-    border: "1px solid #0f5f9f",
+    border: "1px solid var(--primary)",
     borderRadius: "8px",
     padding: "12px 20px",
-    background: "#176eb6",
-    color: "#ffffff",
+    background: "var(--primary)",
+    color: "var(--primary-foreground)",
     fontSize: "16px",
     fontWeight: 800,
     cursor: "pointer"
   },
   secondaryButton: {
     minHeight: "48px",
-    border: "1px solid #b8c7d9",
+    border: "1px solid var(--border)",
     borderRadius: "8px",
     padding: "12px 20px",
-    background: "#ffffff",
-    color: "#17202a",
+    background: "var(--secondary)",
+    color: "var(--secondary-foreground)",
     fontSize: "16px",
     fontWeight: 800,
     cursor: "pointer"
@@ -1665,7 +1920,7 @@ const talentStyles: Record<string, CSSProperties> = {
     margin: "0 0 10px",
     padding: 0,
     border: 0,
-    color: "#1769aa",
+    color: "var(--primary)",
     background: "transparent",
     fontSize: "15px",
     fontWeight: 800,
@@ -1695,8 +1950,8 @@ const talentStyles: Record<string, CSSProperties> = {
     border: 0,
     borderRadius: "8px",
     padding: "12px 18px",
-    background: "#1266b0",
-    color: "#ffffff",
+    background: "var(--primary)",
+    color: "var(--primary-foreground)",
     fontSize: "16px",
     fontWeight: 800,
     cursor: "pointer"
@@ -1783,10 +2038,10 @@ const talentStyles: Record<string, CSSProperties> = {
   },
   filterButton: {
     minHeight: "42px",
-    border: "1px solid #c9d7e8",
+    border: "1px solid var(--border)",
     borderRadius: "6px",
-    background: "#ffffff",
-    color: "#10233f",
+    background: "var(--background)",
+    color: "var(--foreground)",
     fontSize: "15px",
     fontWeight: 800,
     whiteSpace: "normal",
@@ -1866,10 +2121,10 @@ const talentStyles: Record<string, CSSProperties> = {
     justifySelf: "stretch",
     minHeight: "48px",
     minWidth: 0,
-    border: "1px solid #1266b0",
+    border: "1px solid var(--primary)",
     borderRadius: "8px",
-    background: "#1266b0",
-    color: "#ffffff",
+    background: "var(--primary)",
+    color: "var(--primary-foreground)",
     fontSize: "16px",
     fontWeight: 800,
     cursor: "pointer"
@@ -1901,7 +2156,7 @@ const signupStyles: Record<string, CSSProperties> = {
     margin: "0 0 18px",
     padding: 0,
     border: 0,
-    color: "#1769aa",
+    color: "var(--primary)",
     background: "transparent",
     fontSize: "16px",
     fontWeight: 800,
@@ -2000,7 +2255,7 @@ const signupStyles: Record<string, CSSProperties> = {
     gridColumn: "1 / -1"
   },
   label: {
-    color: "#243b53",
+    color: "var(--foreground)",
     fontSize: "18px",
     fontWeight: 800
   },
@@ -2009,13 +2264,13 @@ const signupStyles: Record<string, CSSProperties> = {
     boxSizing: "border-box",
     minHeight: "58px",
     padding: "14px 16px",
-    border: "1px solid #bcccdc",
+    border: "1px solid var(--input)",
     borderRadius: "8px",
-    color: "#17202a",
-    background: "#ffffff",
+    color: "var(--foreground)",
+    background: "var(--background)",
     font: "inherit",
     fontSize: "18px",
-    outlineColor: "#1769aa"
+    outlineColor: "var(--ring)"
   },
   textarea: {
     minHeight: "132px",
@@ -2046,8 +2301,8 @@ const signupStyles: Record<string, CSSProperties> = {
     padding: "0 24px",
     border: 0,
     borderRadius: "8px",
-    color: "#ffffff",
-    background: "#1769aa",
+    color: "var(--primary-foreground)",
+    background: "var(--primary)",
     fontSize: "18px",
     fontWeight: 800,
     cursor: "pointer"
@@ -2056,10 +2311,10 @@ const signupStyles: Record<string, CSSProperties> = {
     minHeight: "58px",
     minWidth: "112px",
     padding: "0 22px",
-    border: "1px solid #bcccdc",
+    border: "1px solid var(--border)",
     borderRadius: "8px",
-    color: "#243b53",
-    background: "#ffffff",
+    color: "var(--secondary-foreground)",
+    background: "var(--secondary)",
     fontSize: "18px",
     fontWeight: 800,
     cursor: "pointer"

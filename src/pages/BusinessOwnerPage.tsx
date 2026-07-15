@@ -1,4 +1,9 @@
 import { FormEvent, useMemo, useState } from "react";
+import { Button } from "../components/ui/button";
+import { Field as FieldRoot, FieldLabel } from "../components/ui/field";
+import { Input } from "../components/ui/input";
+import { Select } from "../components/ui/select";
+import { Textarea } from "../components/ui/textarea";
 
 type SignupStep = "business" | "contact" | "hiring";
 
@@ -139,10 +144,10 @@ export function BusinessOwnerPage({ onBack }: BusinessOwnerPageProps) {
             </div>
           </dl>
           <div className="business-actions">
-            <button className="secondary-button" type="button" onClick={onBack}>
+            <Button className="secondary-button" variant="secondary" type="button" onClick={onBack}>
               메인으로
-            </button>
-            <button
+            </Button>
+            <Button
               className="primary-button"
               type="button"
               onClick={() => {
@@ -152,7 +157,7 @@ export function BusinessOwnerPage({ onBack }: BusinessOwnerPageProps) {
               }}
             >
               새 등록 작성
-            </button>
+            </Button>
           </div>
         </section>
       </main>
@@ -163,9 +168,9 @@ export function BusinessOwnerPage({ onBack }: BusinessOwnerPageProps) {
     <main className="business-page">
       <section className="business-shell" aria-labelledby="business-title">
         <div className="business-header">
-          <button className="back-link" type="button" onClick={onBack}>
+          <Button className="back-link" variant="ghost" type="button" onClick={onBack}>
             메인으로 돌아가기
-          </button>
+          </Button>
           <p className="section-kicker">구인자 등록</p>
           <h1 id="business-title">지역 일자리를 등록할 사업장 정보를 입력하세요</h1>
           <p>
@@ -292,9 +297,10 @@ export function BusinessOwnerPage({ onBack }: BusinessOwnerPageProps) {
                   placeholder="예: 1명"
                   onChange={(value) => updateField("requiredHeadcount", value)}
                 />
-                <label className="field">
-                  <span>업무 강도</span>
-                  <select
+                <FieldRoot className="field">
+                  <FieldLabel htmlFor="business-work-intensity">업무 강도</FieldLabel>
+                  <Select
+                    id="business-work-intensity"
                     value={form.workIntensity}
                     onChange={(event) => updateField("workIntensity", event.target.value)}
                   >
@@ -302,28 +308,29 @@ export function BusinessOwnerPage({ onBack }: BusinessOwnerPageProps) {
                     <option value="가벼움">가벼움</option>
                     <option value="보통">보통</option>
                     <option value="무거운 작업 있음">무거운 작업 있음</option>
-                  </select>
-                </label>
-                <label className="field full-width-field">
-                  <span>업무 설명</span>
-                  <textarea
+                  </Select>
+                </FieldRoot>
+                <FieldRoot className="field full-width-field">
+                  <FieldLabel htmlFor="business-description">업무 설명</FieldLabel>
+                  <Textarea
+                    id="business-description"
                     value={form.description}
                     placeholder="이동 동선, 서서 일하는 시간, 반복 작업 여부를 적어주세요."
                     onChange={(event) => updateField("description", event.target.value)}
                   />
-                </label>
+                </FieldRoot>
               </div>
               <JobPreview form={form} />
             </div>
           )}
 
           <div className="business-actions">
-            <button className="secondary-button" type="button" onClick={goPrevious}>
+            <Button className="secondary-button" variant="secondary" type="button" onClick={goPrevious}>
               이전
-            </button>
-            <button className="primary-button" disabled={!isCurrentStepReady} type="submit">
+            </Button>
+            <Button className="primary-button" disabled={!isCurrentStepReady} type="submit">
               {currentStep === "hiring" ? "등록 요청 완료" : "다음"}
-            </button>
+            </Button>
           </div>
         </form>
       </section>
@@ -341,15 +348,15 @@ type FieldProps = {
 
 function Field({ label, value, placeholder, type = "text", onChange }: FieldProps) {
   return (
-    <label className="field">
-      <span>{label}</span>
-      <input
+    <FieldRoot className="field">
+      <FieldLabel>{label}</FieldLabel>
+      <Input
         type={type}
         value={value}
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
       />
-    </label>
+    </FieldRoot>
   );
 }
 
