@@ -130,7 +130,8 @@
 ## 10. 기술 기준
 
 - 프론트엔드: React, TypeScript, Vite
-- 실행 도구: Bun 권장, npm 사용 가능
+- 실행 환경: Docker Compose
+- 패키지 관리: npm
 - 배포/연동: Firebase 기준
 - Firebase SDK 값: `.env`에만 저장하고 문서에는 기록하지 않음
 - 공유용 환경변수 문서: `.env.example`
