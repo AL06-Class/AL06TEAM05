@@ -82,6 +82,7 @@
 - `localJobs`: 지역 일자리
 - `partnerOrganizations`: 주민센터/복지관 제휴 기관
 - `applications`: 지원서
+- `resumes`: 구직자 이력서
 - `scheduleConversations`: 일정 조율 챗봇 대화
 - `availabilitySlots`: 면접 가능 시간
 - `scheduleSuggestions`: 추천 면접 시간
@@ -128,6 +129,11 @@
 - `preferredRegion`: 희망 근무 지역
 - `workType`: 가능한 업무 유형
 - `careerNote`: 경력 구술 내용
+- `wantedJob`: 희망하는 일
+- `experience`: 이전 업무 경험
+- `strength`: 업무 강점
+- `workTime`: 근무 가능 시간
+- `workArea`: 희망 근무 지역
 - `matchingStatus`: 매칭 상태
 - `connectionStatus`: 지원 또는 연결 상태
 - `organizationId`: 제휴 기관 식별자
@@ -296,6 +302,18 @@
 - `createdAt`
 - `updatedAt`
 
+### resumes
+
+- `id`
+- `wantedJob`
+- `experience`
+- `strength`
+- `workTime`
+- `workArea`
+- `status`
+- `createdAt`
+- `updatedAt`
+
 ### scheduleConversations
 
 - `id`
@@ -400,6 +418,8 @@
 - 구인자 상세 입력 필드 기준: `workSchedule`, `payText`, `requiredHeadcount`, `workIntensity`를 화면 초안 필드로 사용
 
 ## 변경 이력
+
+- 2026-07-16: MVP 이력서 저장을 위한 `resumes` 컬렉션과 `wantedJob`, `experience`, `strength`, `workTime`, `workArea` 필드 추가
 
 - 2026-07-08: 구인자 상세 입력을 위해 `workSchedule`, `payText`, `requiredHeadcount`, `workIntensity` 필드 이름 추가
 - 2026-07-06: 구인자 회원가입 화면 병합을 위해 기업/담당자 기본 필드 초안 추가

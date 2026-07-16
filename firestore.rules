@@ -1,0 +1,33 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /resumes/{resumeId} {
+      allow create: if request.resource.data.keys().hasOnly([
+        'wantedJob',
+        'experience',
+        'strength',
+        'workTime',
+        'workArea',
+        'status',
+        'createdAt',
+        'updatedAt'
+      ])
+      && request.resource.data.wantedJob is string
+      && request.resource.data.wantedJob.size() <= 500
+      && request.resource.data.experience is string
+      && request.resource.data.experience.size() <= 2000
+      && request.resource.data.strength is string
+      && request.resource.data.strength.size() <= 1000
+      && request.resource.data.workTime is string
+      && request.resource.data.workTime.size() <= 500
+      && request.resource.data.workArea is string
+      && request.resource.data.workArea.size() <= 500
+      && request.resource.data.status == 'generated'
+      && request.resource.data.createdAt == request.time
+      && request.resource.data.updatedAt == request.time;
+
+      allow read, update, delete: if false;
+    }
+  }
+}
