@@ -817,6 +817,8 @@ function ApplicantSignup({ onBack }: { onBack: () => void }) {
   const createResumePreview = async () => {
     stopRecording();
     setIsGeneratingResume(true);
+    setResumeText(answers);
+    setStepIndex((current) => Math.min(current + 1, applicantSteps.length - 1));
     setMessage("이력서를 만들고 있습니다. 잠시만 기다려주세요.");
 
     try {
@@ -828,7 +830,6 @@ function ApplicantSignup({ onBack }: { onBack: () => void }) {
       const response = await requestResumeDraft(resumeAiRequest);
 
       setResumeText(response.resumeText);
-      setStepIndex((current) => Math.min(current + 1, applicantSteps.length - 1));
       setMessage("");
     } catch {
       setMessage("이력서를 만들지 못했습니다. 다시 눌러주세요.");
@@ -1068,7 +1069,7 @@ function ApplicantSignup({ onBack }: { onBack: () => void }) {
             <Button
               type="button"
               style={applicantStyles.primaryButton}
-              disabled={isSavingResume || resumeText === null}
+              disabled={isGeneratingResume || isSavingResume || resumeText === null}
               onClick={() => void saveResumeAndFinish()}
             >
               {isSavingResume ? "저장 중" : "이력서 저장하기"}
