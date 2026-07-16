@@ -28,6 +28,7 @@ import {
   buildResumeAiRequest,
   type ResumeAiAnswers
 } from "./services/resumeAiRequest";
+import { saveResume } from "./services/resumeStore";
 
 type ActionLink = {
   readonly label: string;
@@ -679,6 +680,7 @@ function ApplicantSignup({ onBack }: { onBack: () => void }) {
   const [resumeText, setResumeText] =
     useState<ResumeAiResponse["resumeText"] | null>(null);
   const [isGeneratingResume, setIsGeneratingResume] = useState(false);
+  const [isSavingResume, setIsSavingResume] = useState(false);
   const [recordingField, setRecordingField] =
     useState<keyof ResumeAiAnswers | null>(null);
   const [message, setMessage] = useState("");
@@ -696,8 +698,9 @@ function ApplicantSignup({ onBack }: { onBack: () => void }) {
     (currentStep.id === "resumeForm" && !isGeneratingResume);
 
   const stopRecording = () => {
-    recognitionRef.current?.stop();
+    const recognition = recognitionRef.current;
     recognitionRef.current = null;
+    recognition?.stop();
     setRecordingField(null);
   };
 
@@ -768,7 +771,7 @@ function ApplicantSignup({ onBack }: { onBack: () => void }) {
     const recognition = new BrowserSpeechRecognition();
 
     recognition.lang = "ko-KR";
-    recognition.continuous = false;
+    recognition.continuous = true;
     recognition.interimResults = false;
 
     recognition.onresult = (event: any) => {
@@ -786,15 +789,23 @@ function ApplicantSignup({ onBack }: { onBack: () => void }) {
       }
     };
 
-    recognition.onerror = () => {
+    recognition.onerror = (event: any) => {
+      if (event.error === "no-speech") {
+        return;
+      }
+
       setMessage("녹음 내용을 읽지 못했습니다. 다시 말하거나 직접 입력해주세요.");
       setRecordingField(null);
       recognitionRef.current = null;
     };
 
     recognition.onend = () => {
+      if (recognitionRef.current === recognition) {
+        recognition.start();
+        return;
+      }
+
       setRecordingField(null);
-      recognitionRef.current = null;
     };
 
     recognitionRef.current = recognition;
@@ -823,6 +834,24 @@ function ApplicantSignup({ onBack }: { onBack: () => void }) {
       setMessage("이력서를 만들지 못했습니다. 다시 눌러주세요.");
     } finally {
       setIsGeneratingResume(false);
+    }
+  };
+
+  const saveResumeAndFinish = async () => {
+    if (resumeText === null || isSavingResume) {
+      return;
+    }
+
+    setIsSavingResume(true);
+    setMessage("이력서를 저장하고 있습니다.");
+
+    try {
+      await saveResume(resumeText);
+      onBack();
+    } catch {
+      setMessage("이력서를 저장하지 못했습니다. 다시 눌러주세요.");
+    } finally {
+      setIsSavingResume(false);
     }
   };
 
@@ -1035,7 +1064,16 @@ function ApplicantSignup({ onBack }: { onBack: () => void }) {
           <Button type="button" variant="secondary" style={applicantStyles.secondaryButton} onClick={goBack}>
             {stepIndex === 0 ? "메인으로" : "이전"}
           </Button>
-          {currentStep.id !== "resumeResult" && (
+          {currentStep.id === "resumeResult" ? (
+            <Button
+              type="button"
+              style={applicantStyles.primaryButton}
+              disabled={isSavingResume || resumeText === null}
+              onClick={() => void saveResumeAndFinish()}
+            >
+              {isSavingResume ? "저장 중" : "이력서 저장하기"}
+            </Button>
+          ) : (
             <Button
               type="button"
               style={{
